@@ -657,10 +657,10 @@ function ResultCard({ n, predictions }) {
 // ─── Policy Redesign Phase ──────────────────────────────
 
 const POLICY_OPTIONS = [
-  { id: "produce", label: "Require fresh produce in all stores", profitPenalty: -18, communityBenefit: "Improves nutrition access, but raises operating costs (refrigeration, waste). Industry data suggests fresh produce carries far lower margins than packaged goods in small-format stores." },
-  { id: "buffer", label: "No new store within 2 mi of an existing grocer", profitPenalty: -31, communityBenefit: "Protects local grocers from displacement. Caoui et al. (2024) found roughly one independent grocer lost per three dollar stores within a 2-mile radius. But this also blocks dollar stores from their most profitable locations." },
-  { id: "hire-local", label: "Require 80% local hiring + living wage", profitPenalty: -12, communityBenefit: "Recirculates money in the community. Modest profit impact, but erodes DG's labor cost advantage (avg hourly wage is ~$12–14, per Glassdoor/PayScale 2025 data)." },
-  { id: "none", label: "No constraints (status quo)", profitPenalty: 0, communityBenefit: "Maximum profit. Maximum community harm. This is the current reality in most U.S. jurisdictions." },
+  { id: "produce", label: "Require fresh produce in all stores", profitPenalty: -18, forCase: "Directly addresses nutrition gaps in communities with limited grocery access.", againstCase: "Raises operating costs (refrigeration, spoilage). Fresh produce margins are far lower than packaged goods. Could make some locations financially unviable, resulting in fewer stores and fewer jobs." },
+  { id: "buffer", label: "No new store within 2 mi of an existing grocer", profitPenalty: -31, forCase: "Reduces grocer displacement. Caoui et al. (2024) found roughly one grocer lost per three dollar stores within 2 miles.", againstCase: "Limits retail competition, which can mean higher prices for consumers. Some economists argue buffer zones reduce consumer choice and protect inefficient incumbents. Also blocks stores from areas that may genuinely need affordable options." },
+  { id: "hire-local", label: "Require 80% local hiring + living wage", profitPenalty: -12, forCase: "Recirculates wages in the community. Local hiring builds workforce skills. Living wage reduces reliance on public assistance.", againstCase: "Raises labor costs (~$12–14/hr current avg per Glassdoor). Could lead to fewer hours or fewer stores in marginal markets. DG's low-cost model depends partly on lean staffing." },
+  { id: "none", label: "No additional constraints", profitPenalty: 0, forCase: "Maximizes store openings, job creation, and consumer access to affordable goods. DG serves communities that other retailers have abandoned. 60% of U.S. households shop at Dollar General.", againstCase: "Research suggests this path is associated with grocer displacement, reduced produce access, and long-term food desert entrenchment in vulnerable communities (Marchesi et al., 2024; Caoui et al., 2024)." },
 ];
 
 function PolicyRedesign({ selected, sessionId }) {
@@ -672,10 +672,10 @@ function PolicyRedesign({ selected, sessionId }) {
   return (
     <div className="bg-white rounded-xl border border-gray-300 p-6 space-y-5">
       <div>
-        <h3 className="text-lg font-bold text-teal-600 mb-1">What Would You Do Differently?</h3>
+        <h3 className="text-lg font-bold text-teal-600 mb-1">The Policy Question</h3>
         <p className="text-gray-600 text-sm">
-          If you could impose one policy constraint on Dollar General's expansion, which would you choose?
-          Watch how it changes the profit math.
+          Should there be policy constraints on dollar store expansion? Each option involves real trade-offs.
+          Select one to see both sides of the argument.
         </p>
       </div>
 
@@ -702,7 +702,7 @@ function PolicyRedesign({ selected, sessionId }) {
       </div>
 
       {chosen && (
-        <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-teal-500 space-y-3">
+        <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-gray-400 space-y-3">
           <div className="flex items-center gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-amber-600">{baseProfit.toFixed(0)}</div>
@@ -719,17 +719,22 @@ function PolicyRedesign({ selected, sessionId }) {
               <div className={cn("text-2xl font-bold", chosen.profitPenalty < 0 ? "text-red-600" : "text-gray-600")}>
                 {chosen.profitPenalty === 0 ? "0%" : `${chosen.profitPenalty}%`}
               </div>
-              <div className="text-xs text-gray-500">Change</div>
+              <div className="text-xs text-gray-500">Est. profit change</div>
             </div>
           </div>
-          <p className="text-sm text-gray-800 leading-relaxed">{chosen.communityBenefit}</p>
-          {chosen.id !== "none" && (
-            <p className="text-xs text-gray-500 italic">
-              This is why cities like Tulsa, Fort Worth, and Cleveland have explored similar zoning and requirements.
-              The policy question isn't whether DG provides value — it's whether the current model captures too much value
-              while externalizing too much cost.
-            </p>
-          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+            <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
+              <div className="text-xs font-semibold text-emerald-700 mb-1">Arguments for this policy</div>
+              <p className="text-sm text-gray-700 leading-relaxed">{chosen.forCase}</p>
+            </div>
+            <div className="bg-red-50 rounded-lg p-3 border border-red-200">
+              <div className="text-xs font-semibold text-red-700 mb-1">Arguments against this policy</div>
+              <p className="text-sm text-gray-700 leading-relaxed">{chosen.againstCase}</p>
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 italic">
+            Cities like Tulsa, Fort Worth, and Cleveland have explored similar regulations. These are active policy debates with legitimate perspectives on both sides.
+          </p>
         </div>
       )}
     </div>
@@ -768,35 +773,56 @@ function Scorecard({ selected, predictions, sessionId }) {
   const dgAvgProfit = dgPicks.reduce((s, n) => s + n.profitScore, 0) / 3;
   const dgGrocersClosed = dgPicks.filter((n) => n.communityImpact.grocerCloses).length;
 
+  // Benefits calculations
+  const totalStapleMi = selectedData.reduce((sum, n) => sum + n.dgBrings.cheapestStaplesMi, 0);
+  const avgStapleMi = totalStapleMi / selectedData.length;
+  const householdsServed = Math.round(peopleAffected * 0.6); // ~60% of DG customers are core low-income
+
   return (
     <div className="space-y-6">
-      {/* Your scorecard */}
+      {/* Your scorecard — two sides */}
       <div className="bg-white rounded-xl border border-gray-300 p-6">
         <h3 className="text-lg font-bold text-gray-900 mb-4">Your Scorecard</h3>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="text-center">
-            <div className="text-3xl font-bold text-green-600">{avgProfit.toFixed(0)}</div>
-            <div className="text-xs text-gray-600 mt-1">Avg profit score (illustrative)</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Benefits */}
+          <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-200">
+            <div className="text-xs font-semibold text-emerald-700 uppercase tracking-wider mb-3">What These Stores Bring</div>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div>
+                <div className="text-2xl font-bold text-emerald-700">{totalJobs}</div>
+                <div className="text-xs text-gray-600 mt-1">Jobs created</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-emerald-700">{avgStapleMi.toFixed(1)} mi</div>
+                <div className="text-xs text-gray-600 mt-1">Avg distance to cheap staples</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-emerald-700">{peopleAffected.toLocaleString()}</div>
+                <div className="text-xs text-gray-600 mt-1">People with new retail access</div>
+              </div>
+            </div>
           </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-red-600">{grocersClosed}</div>
-            <div className="text-xs text-gray-600 mt-1">Grocers closed</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-red-600">{newFoodDeserts}</div>
-            <div className="text-xs text-gray-600 mt-1">New food deserts</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-amber-600">{formatPct(avgProduceChange)}</div>
-            <div className="text-xs text-gray-600 mt-1">Avg produce spending</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-teal-600">{totalJobs}</div>
-            <div className="text-xs text-gray-600 mt-1">Jobs created</div>
+          {/* Costs */}
+          <div className="bg-red-50 rounded-lg p-4 border border-red-200">
+            <div className="text-xs font-semibold text-red-700 uppercase tracking-wider mb-3">Projected Community Costs</div>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div>
+                <div className="text-2xl font-bold text-red-600">{grocersClosed}</div>
+                <div className="text-xs text-gray-600 mt-1">Grocers likely displaced</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-red-600">{newFoodDeserts}</div>
+                <div className="text-xs text-gray-600 mt-1">New food desert risk</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-red-600">{formatPct(avgProduceChange)}</div>
+                <div className="text-xs text-gray-600 mt-1">Avg produce spending (est.)</div>
+              </div>
+            </div>
           </div>
         </div>
-        <div className="mt-4 pt-4 border-t border-gray-300 flex justify-between items-center flex-wrap gap-2">
-          <span className="text-gray-600 text-sm">{peopleAffected.toLocaleString()} people affected by your choices</span>
+        <div className="flex justify-between items-center flex-wrap gap-2 pt-3 border-t border-gray-300">
+          <span className="text-gray-600 text-sm">Avg illustrative profit score: <strong>{avgProfit.toFixed(0)}</strong>/100</span>
           {totalPredictions > 0 && (
             <span className="text-gray-600 text-sm">
               Your predictions: <strong className={correctCount / totalPredictions >= 0.5 ? "text-emerald-600" : "text-amber-600"}>{correctCount}/{totalPredictions} correct</strong>
@@ -805,26 +831,31 @@ function Scorecard({ selected, predictions, sessionId }) {
         </div>
       </div>
 
-      {/* DG algorithm comparison */}
-      <div className="bg-amber-50 rounded-xl border border-amber-300 p-6">
-        <h3 className="text-lg font-bold text-amber-700 mb-2">What Dollar General's Algorithm Would Pick</h3>
-        <p className="text-amber-600 text-sm mb-4">
-          Optimizing purely for profit: <strong>{dgPicks.map((n) => n.name).join(", ")}</strong>
+      {/* Profit-maximizing comparison — reframed */}
+      <div className="bg-gray-50 rounded-xl border border-gray-300 p-6">
+        <h3 className="text-lg font-bold text-gray-900 mb-2">For Comparison: The Profit-Maximizing Picks</h3>
+        <p className="text-gray-600 text-sm mb-4">
+          If you sorted purely by the illustrative profit scores, the top 3 would be: <strong>{dgPicks.map((n) => n.name).join(", ")}</strong>.
+          How do they compare to your choices?
         </p>
-        <div className="grid grid-cols-3 gap-4 text-center">
+        <div className="grid grid-cols-4 gap-4 text-center">
           <div>
-            <div className="text-2xl font-bold text-amber-700">{dgAvgProfit.toFixed(0)}</div>
-            <div className="text-xs text-amber-600">Avg profit score (illustrative)</div>
+            <div className="text-2xl font-bold text-gray-700">{dgAvgProfit.toFixed(0)}</div>
+            <div className="text-xs text-gray-500">Avg profit score</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-red-600">{dgGrocersClosed}</div>
-            <div className="text-xs text-amber-600">Grocers closed</div>
+            <div className="text-2xl font-bold text-gray-700">{dgPicks.reduce((s, n) => s + n.dgBrings.jobs, 0)}</div>
+            <div className="text-xs text-gray-500">Jobs created</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-red-600">
+            <div className="text-2xl font-bold text-gray-700">{dgGrocersClosed}</div>
+            <div className="text-xs text-gray-500">Grocers likely displaced</div>
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-gray-700">
               {dgPicks.filter((n) => !n.isFoodDesert && n.communityImpact.foodDesertStays).length}
             </div>
-            <div className="text-xs text-amber-600">New food deserts</div>
+            <div className="text-xs text-gray-500">New food desert risk</div>
           </div>
         </div>
       </div>
@@ -832,29 +863,28 @@ function Scorecard({ selected, predictions, sessionId }) {
       {/* Policy redesign */}
       <PolicyRedesign selected={selected} sessionId={sessionId} />
 
-      {/* Structural insight */}
+      {/* Discussion questions */}
       <div className="bg-white rounded-xl border border-gray-300 p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-3">The Structural Insight</h3>
-        <p className="text-gray-800 text-sm leading-relaxed mb-3">
-          Notice the pattern: <strong className="text-amber-600">the most profitable locations are always the ones that cause the most community harm.</strong>{" "}
-          This isn't a bug in Dollar General's strategy — it's the core logic. Their model depends on:
-        </p>
-        <ul className="text-gray-800 text-sm space-y-2 ml-4 list-disc">
-          <li><strong className="text-gray-900">Low competition</strong> — areas where grocers are already thin-margin or absent</li>
-          <li><strong className="text-gray-900">Captive customers</strong> — people without cars or alternatives who must shop what's nearby</li>
-          <li><strong className="text-gray-900">High-margin product mix</strong> — shelf-stable processed food, not fresh produce</li>
-        </ul>
-        <p className="text-gray-800 text-sm leading-relaxed mt-3">
-          But the picture is genuinely complex. Dollar General <em>does</em> provide real value: jobs in communities with few employers,
-          the cheapest staples within walking distance, and tax revenue for struggling municipalities. The question isn't whether
-          dollar stores are "good" or "bad" — it's whether the <strong className="text-teal-600">incentive structure</strong> can
-          be redesigned so the business model doesn't require harming the communities it serves.
-        </p>
-        <p className="text-gray-800 text-sm leading-relaxed mt-3">
-          This is what economists call a <strong className="text-teal-600">negative externality</strong>: the health and access
-          costs of the business model are borne by the community, not the company. It connects directly to the food security
-          framework: Dollar General's location strategy undermines <em>availability</em>, <em>access</em>, and <em>stability</em> simultaneously.
-        </p>
+        <h3 className="text-lg font-bold text-gray-900 mb-3">Discussion Questions</h3>
+        <p className="text-gray-600 text-sm mb-4">Look at the relationship between the profit scores and the community outcomes across all 9 neighborhoods. Then consider:</p>
+        <div className="space-y-4">
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <p className="text-sm font-medium text-gray-900 mb-1">1. What pattern, if any, do you see between profitability and community impact?</p>
+            <p className="text-xs text-gray-500">Consider: Which neighborhoods have the highest profit scores? What do they have in common? Is this pattern inevitable, or could a business serve these same communities differently?</p>
+          </div>
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <p className="text-sm font-medium text-gray-900 mb-1">2. Dollar General brings jobs, affordable staples, and convenience to communities that other retailers have abandoned. How should we weigh these benefits against the projected costs?</p>
+            <p className="text-xs text-gray-500">Consider: Is it better to have a Dollar General than nothing? Who gets to make that choice — the company, the community, policymakers? What information would you need to answer this?</p>
+          </div>
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <p className="text-sm font-medium text-gray-900 mb-1">3. Economists describe costs borne by a community but not by the company as "negative externalities." Does that framework apply here? What are the limits of that framing?</p>
+            <p className="text-xs text-gray-500">Consider: Who bears the cost of grocer displacement? Who benefits? Are there positive externalities too (e.g., jobs, retail access, local spending)?</p>
+          </div>
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <p className="text-sm font-medium text-gray-900 mb-1">4. Is it possible to redesign the incentive structure so that dollar stores can be profitable without displacing grocers?</p>
+            <p className="text-xs text-gray-500">Consider: What would that require — policy changes, a different business model, community ownership, subsidies for grocers? What are the trade-offs of each approach?</p>
+          </div>
+        </div>
         <div className="mt-4 pt-3 border-t border-gray-300">
           <div className="text-xs text-gray-500 space-y-1">
             <p className="font-semibold text-gray-600">References</p>
