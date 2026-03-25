@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dollar General Site Selector — Interactive Exercise</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Firebase SDK for real-time data sync -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <style>
+    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+const { useState, useCallback, useMemo, useEffect, useRef } = React;
+
+// ═══════════════════════════════════════════════════════════════
+// FIREBASE CONFIG — Replace with your Firebase project config
+// ═══════════════════════════════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey: "PASTE_YOUR_API_KEY",
+  authDomain: "PASTE_YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://PASTE_YOUR_PROJECT-default-rtdb.firebaseio.com",
+  projectId: "PASTE_YOUR_PROJECT",
+  storageBucket: "PASTE_YOUR_PROJECT.appspot.com",
+  messagingSenderId: "000000000000",
+  appId: "PASTE_YOUR_APP_ID"
+};
+
+let db = null;
+try {
+  const app = firebase.initializeApp(FIREBASE_CONFIG);
+  db = firebase.database();
+} catch (e) {
+  console.warn("Firebase not configured — running in offline mode.", e.message);
+}
+
+function generateSessionId() {
+  return 'stu_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+}
+
+function writeSubmission(sessionId, data) {
+  if (!db) return;
+  db.ref('submissions/' + sessionId).update({ ...data, timestamp: Date.now() });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DOLLAR GENERAL SITE SELECTOR — Interactive Classroom Exercise
+// Data calibrated from USDA Food Access Research Atlas, Census
+// ACS 2014-18, and UCLA Anderson / Investigate Midwest research
+// ═══════════════════════════════════════════════════════════════
+
+const NEIGHBORHOODS = [
+  {
+    id: 1,
+    name: "South Memphis",
+    state: "TN",
+    description: "Dense urban neighborhood, majority Black community. Two Kroger stores closed in 2018.",
+    population: 8420,
+    medianIncome: 21800,
+    povertyRate: 38.2,
+    pctNoVehicle: 28.4,
+    nearestGroceryMi: 1.8,
+    dailyTraffic: 18500,
+    isRural: false,
+    isFoodDesert: true,
+    hasLocalGrocer: false,
+    existingDollarStores: 2,
+    profitScore: 82,
+    dgBrings: { jobs: 10, cheapestStaplesMi: 0.3, annualTaxRevenue: 42000 },
+    communityImpact: {
+      grocerCloses: false,
+      produceSpendingChange: -8.2,
+      foodDesertStays: true,
+      narrative: "South Memphis already lost its Kroger stores in 2018. Adding another dollar store deepens reliance on shelf-stable processed food. With 28% of residents lacking cars, this becomes the default food source — not a choice. However, a new DG does bring 10 jobs and the cheapest staples within walking distance — a real benefit in a community with limited options.",
+    },
+    coordinates: { row: 0, col: 0 },
+  },
+  {
+    id: 2,
+    name: "Whitehaven",
+    state: "TN",
+    description: "Suburban Memphis area near Graceland. Mixed-income, one aging grocery store remains.",
+    population: 14200,
+    medianIncome: 34500,
+    povertyRate: 24.1,
+    pctNoVehicle: 14.2,
+    nearestGroceryMi: 1.1,
+    dailyTraffic: 22000,
+    isRural: false,
+    isFoodDesert: false,
+    hasLocalGrocer: true,
+    existingDollarStores: 1,
+    profitScore: 74,
+    dgBrings: { jobs: 10, cheapestStaplesMi: 0.4, annualTaxRevenue: 55000 },
+    communityImpact: {
+      grocerCloses: true,
+      produceSpendingChange: -13.8,
+      foodDesertStays: true,
+      narrative: "The one remaining grocery store was already marginal. A new dollar store captures enough household spending to push it under. Fresh produce spending drops 13.8% — matching UCLA's finding for single-dollar-store markets. Whitehaven becomes a new food desert. The trade-off: 10 new jobs and lower prices on staples, but the community loses its only source of fresh food.",
+    },
+    coordinates: { row: 0, col: 1 },
+  },
+  {
+    id: 3,
+    name: "Midtown Memphis",
+    state: "TN",
+    description: "Gentrifying urban core. Two grocery options, higher incomes, walkable.",
+    population: 11300,
+    medianIncome: 52700,
+    povertyRate: 14.8,
+    pctNoVehicle: 8.1,
+    nearestGroceryMi: 0.6,
+    dailyTraffic: 25000,
+    isRural: false,
+    isFoodDesert: false,
+    hasLocalGrocer: true,
+    existingDollarStores: 0,
+    profitScore: 41,
+    dgBrings: { jobs: 10, cheapestStaplesMi: 0.5, annualTaxRevenue: 48000 },
+    communityImpact: {
+      grocerCloses: false,
+      produceSpendingChange: -2.1,
+      foodDesertStays: false,
+      narrative: "Midtown's grocers are well-established and serve a higher-income customer base. A dollar store here captures some impulse purchases but doesn't threaten food access. However — there's little profit upside for Dollar General either. Their model isn't optimized for this market.",
+    },
+    coordinates: { row: 0, col: 2 },
+  },
+  {
+    id: 4,
+    name: "Marks",
+    state: "MS",
+    description: "Small rural town in the Mississippi Delta. One IGA grocery, 50% poverty rate.",
+    population: 1680,
+    medianIncome: 18900,
+    povertyRate: 50.3,
+    pctNoVehicle: 22.6,
+    nearestGroceryMi: 0.8,
+    dailyTraffic: 4200,
+    isRural: true,
+    isFoodDesert: false,
+    hasLocalGrocer: true,
+    existingDollarStores: 0,
+    profitScore: 88,
+    dgBrings: { jobs: 8, cheapestStaplesMi: 0, annualTaxRevenue: 28000 },
+    communityImpact: {
+      grocerCloses: true,
+      produceSpendingChange: -24.6,
+      foodDesertStays: true,
+      narrative: "This is the Dollar General playbook at its most devastating. The rural IGA was already thin-margin. Dollar General undercuts on packaged goods — the grocer's profit center. Within 18 months the IGA closes. The nearest grocery is now 14 miles away. Produce spending collapses. Per Investigate Midwest: rural grocers are 3× more likely to exit after a dollar store arrives. The 8 new DG jobs don't offset the 12 lost at the IGA plus the complete loss of fresh food access.",
+    },
+    coordinates: { row: 1, col: 0 },
+  },
+  {
+    id: 5,
+    name: "Orange Mound",
+    state: "TN",
+    description: "Historic Black neighborhood in Memphis. One of the oldest Black communities in the U.S. Kroger on Lamar closed 2018.",
+    population: 6850,
+    medianIncome: 19400,
+    povertyRate: 42.1,
+    pctNoVehicle: 31.7,
+    nearestGroceryMi: 2.4,
+    dailyTraffic: 14000,
+    isRural: false,
+    isFoodDesert: true,
+    hasLocalGrocer: false,
+    existingDollarStores: 3,
+    profitScore: 71,
+    dgBrings: { jobs: 10, cheapestStaplesMi: 0.2, annualTaxRevenue: 38000 },
+    communityImpact: {
+      grocerCloses: false,
+      produceSpendingChange: -30.4,
+      foodDesertStays: true,
+      narrative: "Orange Mound already has 3 dollar stores and no grocery. This is what UCLA calls the saturation effect: with 3+ dollar stores, produce spending drops up to 30.4%. Adding a 4th compounds the problem. Nearly a third of residents have no car — they walk to what's nearby, and what's nearby is chips, soda, and canned food. A 4th store does create jobs but adds almost no new consumer value.",
+    },
+    coordinates: { row: 1, col: 1 },
+  },
+  {
+    id: 6,
+    name: "Itta Bena",
+    state: "MS",
+    description: "Rural Delta town, home to Mississippi Valley State U. No grocery store within 12 miles.",
+    population: 1950,
+    medianIncome: 16200,
+    povertyRate: 55.8,
+    pctNoVehicle: 19.3,
+    nearestGroceryMi: 12.4,
+    dailyTraffic: 3100,
+    isRural: true,
+    isFoodDesert: true,
+    hasLocalGrocer: false,
+    existingDollarStores: 1,
+    profitScore: 79,
+    dgBrings: { jobs: 8, cheapestStaplesMi: 0.1, annualTaxRevenue: 24000 },
+    communityImpact: {
+      grocerCloses: false,
+      produceSpendingChange: -11.5,
+      foodDesertStays: true,
+      narrative: "With no grocery store for 12 miles, Dollar General is already the de facto food source here. A second store doesn't change the food desert status — it just makes it more permanent. Once dollar stores fill the gap, the economics make it nearly impossible for a grocer to enter. The food desert becomes locked in. That said, a second store may slightly reduce prices through local competition.",
+    },
+    coordinates: { row: 1, col: 2 },
+  },
+  {
+    id: 7,
+    name: "Germantown",
+    state: "TN",
+    description: "Affluent Memphis suburb. Multiple grocery chains, high car ownership.",
+    population: 40100,
+    medianIncome: 108500,
+    povertyRate: 3.2,
+    pctNoVehicle: 2.1,
+    nearestGroceryMi: 0.4,
+    dailyTraffic: 31000,
+    isRural: false,
+    isFoodDesert: false,
+    hasLocalGrocer: true,
+    existingDollarStores: 0,
+    profitScore: 28,
+    dgBrings: { jobs: 10, cheapestStaplesMi: 0.6, annualTaxRevenue: 62000 },
+    communityImpact: {
+      grocerCloses: false,
+      produceSpendingChange: -0.4,
+      foodDesertStays: false,
+      narrative: "Germantown's median income is $108K. Multiple Kroger, Trader Joe's, and Whole Foods locations serve the area. A Dollar General here would be a curiosity, not a community-shaping force. But it also wouldn't generate much profit — Dollar General's model depends on being the only option, not competing with well-funded grocers.",
+    },
+    coordinates: { row: 2, col: 0 },
+  },
+  {
+    id: 8,
+    name: "Ruleville",
+    state: "MS",
+    description: "Rural Sunflower County. Home of Fannie Lou Hamer. One small grocery, aging owner.",
+    population: 2950,
+    medianIncome: 22100,
+    povertyRate: 41.7,
+    pctNoVehicle: 17.8,
+    nearestGroceryMi: 0.5,
+    dailyTraffic: 5800,
+    isRural: true,
+    isFoodDesert: false,
+    hasLocalGrocer: true,
+    existingDollarStores: 1,
+    profitScore: 85,
+    dgBrings: { jobs: 8, cheapestStaplesMi: 0.2, annualTaxRevenue: 31000 },
+    communityImpact: {
+      grocerCloses: true,
+      produceSpendingChange: -19.2,
+      foodDesertStays: true,
+      narrative: "Ruleville's small grocery has an aging owner and slim margins. A second dollar store in a town of 2,950 captures enough of the packaged-goods market to make the grocery unviable. When it closes, the nearest fresh food is 18 miles away in Indianola. This pattern has repeated across hundreds of rural Southern towns. The net job impact is roughly zero (8 DG jobs replace 10 grocer jobs), but the food quality collapses.",
+    },
+    coordinates: { row: 2, col: 1 },
+  },
+  {
+    id: 9,
+    name: "Frayser",
+    state: "TN",
+    description: "North Memphis neighborhood. High poverty, limited transit. One Save-A-Lot remains.",
+    population: 9700,
+    medianIncome: 24800,
+    povertyRate: 35.6,
+    pctNoVehicle: 21.4,
+    nearestGroceryMi: 1.3,
+    dailyTraffic: 16000,
+    isRural: false,
+    isFoodDesert: false,
+    hasLocalGrocer: true,
+    existingDollarStores: 2,
+    profitScore: 80,
+    dgBrings: { jobs: 10, cheapestStaplesMi: 0.3, annualTaxRevenue: 46000 },
+    communityImpact: {
+      grocerCloses: true,
+      produceSpendingChange: -22.7,
+      foodDesertStays: true,
+      narrative: "Frayser's Save-A-Lot is the last grocery standing. With 2 dollar stores already pulling shelf-stable sales, a third tips the balance. The grocer closes. Per the AJPH study, rural and low-income urban grocery stores see ~9% sales declines per dollar store — and Frayser's Save-A-Lot was already operating at the margin. Again: 10 new jobs, but the community loses its only fresh-food retailer and the 15 jobs that came with it.",
+    },
+    coordinates: { row: 2, col: 2 },
+  },
+];
+
+// ─── Utility ────────────────────────────────────────────
+function cn(...classes) {
+  return classes.filter(Boolean).join(" ");
+}
+
+function formatMoney(n) {
+  return "$" + n.toLocaleString();
+}
+
+function formatPct(n) {
+  return n > 0 ? `+${n.toFixed(1)}%` : `${n.toFixed(1)}%`;
+}
+
+// ─── Sort Options ───────────────────────────────────────
+const SORT_OPTIONS = [
+  { key: "default", label: "Default" },
+  { key: "income-asc", label: "Income (low → high)" },
+  { key: "income-desc", label: "Income (high → low)" },
+  { key: "poverty-desc", label: "Poverty rate (high → low)" },
+  { key: "grocery-desc", label: "Grocery distance (far → near)" },
+  { key: "traffic-desc", label: "Road traffic (high → low)" },
+];
+
+function sortNeighborhoods(items, sortKey) {
+  const sorted = [...items];
+  switch (sortKey) {
+    case "income-asc": return sorted.sort((a, b) => a.medianIncome - b.medianIncome);
+    case "income-desc": return sorted.sort((a, b) => b.medianIncome - a.medianIncome);
+    case "poverty-desc": return sorted.sort((a, b) => b.povertyRate - a.povertyRate);
+    case "grocery-desc": return sorted.sort((a, b) => b.nearestGroceryMi - a.nearestGroceryMi);
+    case "traffic-desc": return sorted.sort((a, b) => b.dailyTraffic - a.dailyTraffic);
+    default: return sorted;
+  }
+}
+
+// ─── Components ─────────────────────────────────────────
+
+function SortBar({ sortKey, onSort }) {
+  return (
+    <div className="flex items-center gap-2 mb-4 flex-wrap" role="toolbar" aria-label="Sort communities">
+      <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Sort by:</span>
+      {SORT_OPTIONS.map((opt) => (
+        <button
+          key={opt.key}
+          onClick={() => onSort(opt.key)}
+          className={cn(
+            "px-3 py-1 rounded-full text-xs font-medium transition-colors",
+            sortKey === opt.key
+              ? "bg-teal-200 text-teal-600 ring-1 ring-teal-600"
+              : "bg-white text-gray-600 hover:bg-gray-200 hover:text-gray-800"
+          )}
+          aria-pressed={sortKey === opt.key}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function NeighborhoodCard({ n, selected, onToggle, disabled, phase }) {
+  const isClickable = phase === "selecting" && !disabled;
+
+  return (
+    <button
+      onClick={() => isClickable && onToggle(n.id)}
+      disabled={!isClickable}
+      aria-pressed={selected}
+      aria-label={`${n.name}, ${n.state}. Population ${n.population.toLocaleString()}, median income ${formatMoney(n.medianIncome)}. ${selected ? "Selected" : "Not selected"}`}
+      className={cn(
+        "relative text-left rounded-xl border-2 p-4 transition-all duration-200",
+        "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-teal-500",
+        selected
+          ? "border-teal-500 bg-teal-50 ring-1 ring-teal-400 shadow-lg shadow-teal-200/50"
+          : isClickable
+          ? "border-gray-300 bg-white hover:border-gray-400 cursor-pointer"
+          : "border-gray-300 bg-white opacity-60 cursor-default"
+      )}
+    >
+      {selected && (
+        <div className="absolute -top-2 -right-2 w-6 h-6 bg-teal-500 rounded-full flex items-center justify-center" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="mb-2">
+        <div className="flex items-center gap-2">
+          <h3 className="font-bold text-gray-900 text-sm">{n.name}, {n.state}</h3>
+          {n.isRural && (
+            <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium leading-none">Rural</span>
+          )}
+        </div>
+        <p className="text-gray-600 text-xs mt-1 leading-snug">{n.description}</p>
+      </div>
+
+      {/* Demographics */}
+      <div className="bg-gray-100 rounded-lg p-2.5 mt-2">
+        <div className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1.5">Demographics</div>
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+          <div><span className="text-gray-500">Population:</span> <strong className="text-gray-900">{n.population.toLocaleString()}</strong></div>
+          <div><span className="text-gray-500">Median income:</span> <strong className="text-gray-900">{formatMoney(n.medianIncome)}</strong></div>
+          <div><span className="text-gray-500">Poverty rate:</span> <strong className="text-gray-900">{n.povertyRate}%</strong></div>
+          <div><span className="text-gray-500">No vehicle:</span> <strong className="text-gray-900">{n.pctNoVehicle}%</strong></div>
+        </div>
+      </div>
+
+      {/* Market conditions */}
+      <div className="bg-gray-100 rounded-lg p-2.5 mt-2">
+        <div className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1.5">Market Conditions</div>
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+          <div><span className="text-gray-500">Nearest grocery:</span> <strong className="text-gray-900">{n.nearestGroceryMi} mi</strong></div>
+          <div><span className="text-gray-500">Road traffic:</span> <strong className="text-gray-900">{(n.dailyTraffic / 1000).toFixed(1)}K/day</strong></div>
+          <div><span className="text-gray-500">Existing $ stores:</span> <strong className="text-gray-900">{n.existingDollarStores}</strong></div>
+          <div>
+            <span className="text-gray-500">Local grocer:</span>{" "}
+            <strong className={n.hasLocalGrocer ? "text-emerald-700" : "text-red-600"}>
+              {n.hasLocalGrocer ? "Yes (1)" : "None"}
+            </strong>
+          </div>
+        </div>
+      </div>
+
+      {/* What DG brings */}
+      <div className="bg-gray-100 rounded-lg p-2.5 mt-2">
+        <div className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1.5">What a New DG Store Brings</div>
+        <div className="grid grid-cols-3 gap-x-2 text-xs">
+          <div><span className="text-gray-500">Jobs:</span> <strong className="text-gray-900">{n.dgBrings.jobs}</strong></div>
+          <div><span className="text-gray-500">Cheap staples:</span> <strong className="text-gray-900">{n.dgBrings.cheapestStaplesMi} mi</strong></div>
+          <div><span className="text-gray-500">Tax rev:</span> <strong className="text-gray-900">{formatMoney(n.dgBrings.annualTaxRevenue)}/yr</strong></div>
+        </div>
+      </div>
+
+      {/* Food desert flag */}
+      {n.isFoodDesert && (
+        <div className="mt-2 text-xs text-gray-500 italic">
+          USDA-designated food desert
+        </div>
+      )}
+    </button>
+  );
+}
+
+// ─── Prediction Step ────────────────────────────────────
+
+function PredictionStep({ selected, predictions, setPredictions, onSubmit }) {
+  const selectedData = NEIGHBORHOODS.filter((n) => selected.includes(n.id));
+
+  const updatePrediction = (id, field, value) => {
+    setPredictions((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
+  };
+
+  const allAnswered = selectedData.every(
+    (n) => predictions[n.id]?.grocerCloses !== undefined && predictions[n.id]?.produceDirection !== undefined
+  );
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-bold text-gray-900">Before We Reveal the Results...</h2>
+        <p className="text-gray-600 text-sm">
+          For each community you chose, predict what happens when a new Dollar General opens.
+        </p>
+      </div>
+
+      {selectedData.map((n) => {
+        const pred = predictions[n.id] || {};
+        return (
+          <div key={n.id} className="bg-white rounded-xl border border-gray-300 p-5 space-y-4">
+            <h3 className="font-bold text-gray-900">{n.name}, {n.state}</h3>
+            <div className="text-xs text-gray-600">
+              Pop: {n.population.toLocaleString()} · Income: {formatMoney(n.medianIncome)} · Poverty: {n.povertyRate}% ·
+              Local grocer: {n.hasLocalGrocer ? "Yes" : "None"} · Existing $ stores: {n.existingDollarStores}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Grocer prediction */}
+              <fieldset className="space-y-2">
+                <legend className="text-sm text-gray-800 font-medium">
+                  {n.hasLocalGrocer ? "Will the local grocer survive?" : "Will a new grocer enter the market?"}
+                </legend>
+                <div className="flex gap-2">
+                  {n.hasLocalGrocer ? (
+                    <>
+                      <button
+                        onClick={() => updatePrediction(n.id, "grocerCloses", true)}
+                        className={cn(
+                          "flex-1 py-2 rounded-lg text-sm font-medium transition-colors",
+                          pred.grocerCloses === true ? "bg-red-200 text-red-800 ring-1 ring-red-400" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                        )}
+                      >
+                        It closes
+                      </button>
+                      <button
+                        onClick={() => updatePrediction(n.id, "grocerCloses", false)}
+                        className={cn(
+                          "flex-1 py-2 rounded-lg text-sm font-medium transition-colors",
+                          pred.grocerCloses === false ? "bg-emerald-200 text-emerald-800 ring-1 ring-emerald-400" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                        )}
+                      >
+                        It survives
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => updatePrediction(n.id, "grocerCloses", false)}
+                        className={cn(
+                          "flex-1 py-2 rounded-lg text-sm font-medium transition-colors",
+                          pred.grocerCloses === false ? "bg-gray-200 text-gray-800 ring-1 ring-gray-400" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                        )}
+                      >
+                        No grocer enters
+                      </button>
+                      <button
+                        onClick={() => updatePrediction(n.id, "grocerCloses", true)}
+                        className={cn(
+                          "flex-1 py-2 rounded-lg text-sm font-medium transition-colors",
+                          pred.grocerCloses === true ? "bg-emerald-200 text-emerald-800 ring-1 ring-emerald-400" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                        )}
+                      >
+                        A grocer opens
+                      </button>
+                    </>
+                  )}
+                </div>
+              </fieldset>
+
+              {/* Produce spending prediction */}
+              <fieldset className="space-y-2">
+                <legend className="text-sm text-gray-800 font-medium">What happens to fresh produce spending?</legend>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => updatePrediction(n.id, "produceDirection", "drops-big")}
+                    className={cn(
+                      "flex-1 py-2 rounded-lg text-xs font-medium transition-colors",
+                      pred.produceDirection === "drops-big" ? "bg-red-200 text-red-800 ring-1 ring-red-400" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                    )}
+                  >
+                    Drops a lot (&gt;15%)
+                  </button>
+                  <button
+                    onClick={() => updatePrediction(n.id, "produceDirection", "drops-some")}
+                    className={cn(
+                      "flex-1 py-2 rounded-lg text-xs font-medium transition-colors",
+                      pred.produceDirection === "drops-some" ? "bg-amber-800 text-amber-800 ring-1 ring-amber-400" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                    )}
+                  >
+                    Drops a little (5-15%)
+                  </button>
+                  <button
+                    onClick={() => updatePrediction(n.id, "produceDirection", "stable")}
+                    className={cn(
+                      "flex-1 py-2 rounded-lg text-xs font-medium transition-colors",
+                      pred.produceDirection === "stable" ? "bg-emerald-200 text-emerald-800 ring-1 ring-emerald-400" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                    )}
+                  >
+                    Stays about the same
+                  </button>
+                </div>
+              </fieldset>
+            </div>
+          </div>
+        );
+      })}
+
+      <div className="text-center">
+        <button
+          onClick={onSubmit}
+          disabled={!allAnswered}
+          className={cn(
+            "px-8 py-3 rounded-lg font-semibold text-lg transition-all",
+            allAnswered
+              ? "bg-teal-600 hover:bg-teal-500 text-gray-900"
+              : "bg-gray-200 text-gray-500 cursor-not-allowed"
+          )}
+        >
+          See What Actually Happened →
+        </button>
+        {!allAnswered && (
+          <p className="text-gray-500 text-xs mt-2">Answer all questions to continue</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Prediction Accuracy Badge ──────────────────────────
+
+function PredictionBadge({ n, predictions }) {
+  const pred = predictions[n.id];
+  if (!pred) return null;
+  const actual = n.communityImpact;
+  const results = [];
+
+  // Grocer prediction accuracy
+  if (n.hasLocalGrocer) {
+    const correct = pred.grocerCloses === actual.grocerCloses;
+    results.push({ label: correct ? "Grocer prediction correct" : "Grocer prediction wrong", correct });
+  }
+
+  // Produce prediction accuracy
+  const actualDrop = Math.abs(actual.produceSpendingChange);
+  let actualCategory;
+  if (actualDrop > 15) actualCategory = "drops-big";
+  else if (actualDrop > 5) actualCategory = "drops-some";
+  else actualCategory = "stable";
+  const produceCorrect = pred.produceDirection === actualCategory;
+  results.push({ label: produceCorrect ? "Produce prediction correct" : "Produce prediction wrong", correct: produceCorrect });
+
+  return (
+    <div className="flex flex-wrap gap-2 mt-2">
+      {results.map((r, i) => (
+        <span
+          key={i}
+          className={cn(
+            "px-2 py-0.5 rounded-full text-xs font-medium",
+            r.correct ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600"
+          )}
+        >
+          {r.correct ? "✓" : "✗"} {r.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+// ─── Result Card ────────────────────────────────────────
+
+function ResultCard({ n, predictions }) {
+  const impact = n.communityImpact;
+  return (
+    <div className="rounded-xl border border-gray-300 bg-white p-5 space-y-4">
+      <div className="flex justify-between items-start flex-wrap gap-2">
+        <h3 className="font-bold text-gray-900 text-lg">{n.name}, {n.state}</h3>
+        <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-medium">
+          DG Profit Score: {n.profitScore}/100
+        </span>
+      </div>
+
+      <PredictionBadge n={n} predictions={predictions} />
+
+      <div className="grid grid-cols-3 gap-3">
+        <div className={cn("rounded-lg p-3 text-center", impact.grocerCloses ? "bg-red-50 border border-red-300" : "bg-gray-50 border border-gray-300")}>
+          <div className={cn("text-2xl font-bold", impact.grocerCloses ? "text-red-600" : "text-gray-600")}>
+            {impact.grocerCloses ? "YES" : "NO"}
+          </div>
+          <div className="text-xs text-gray-600 mt-1">Local grocer closes?</div>
+        </div>
+        <div className="rounded-lg p-3 text-center bg-red-50 border border-red-300">
+          <div className="text-2xl font-bold text-red-600">{formatPct(impact.produceSpendingChange)}</div>
+          <div className="text-xs text-gray-600 mt-1">Produce spending</div>
+        </div>
+        <div className={cn("rounded-lg p-3 text-center", impact.foodDesertStays ? "bg-red-50 border border-red-300" : "bg-gray-50 border border-gray-300")}>
+          <div className={cn("text-2xl font-bold", impact.foodDesertStays ? "text-red-600" : "text-emerald-600")}>
+            {impact.foodDesertStays ? "YES" : "NO"}
+          </div>
+          <div className="text-xs text-gray-600 mt-1">Food desert?</div>
+        </div>
+      </div>
+
+      <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-800 leading-relaxed border-l-4 border-amber-500">
+        {impact.narrative}
+      </div>
+    </div>
+  );
+}
+
+// ─── Policy Redesign Phase ──────────────────────────────
+
+const POLICY_OPTIONS = [
+  { id: "produce", label: "Require fresh produce in all stores", profitPenalty: -18, communityBenefit: "Improves nutrition access, but raises operating costs (refrigeration, waste). DG's internal data shows produce generates ~2% margin vs ~35% for packaged snacks." },
+  { id: "buffer", label: "No new store within 2 mi of an existing grocer", profitPenalty: -31, communityBenefit: "Protects local grocers from displacement. But also blocks DG from its most profitable locations — the ones where captive customers have no alternative." },
+  { id: "hire-local", label: "Require 80% local hiring + living wage", profitPenalty: -12, communityBenefit: "Recirculates money in the community. Modest profit impact, but erodes DG's labor cost advantage (avg wage is ~$10/hr)." },
+  { id: "none", label: "No constraints (status quo)", profitPenalty: 0, communityBenefit: "Maximum profit. Maximum community harm. This is the current reality in most U.S. jurisdictions." },
+];
+
+function PolicyRedesign({ selected, sessionId }) {
+  const [chosenPolicy, setChosenPolicy] = useState(null);
+  const selectedData = NEIGHBORHOODS.filter((n) => selected.includes(n.id));
+  const baseProfit = selectedData.reduce((s, n) => s + n.profitScore, 0) / selectedData.length;
+  const chosen = POLICY_OPTIONS.find((p) => p.id === chosenPolicy);
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-300 p-6 space-y-5">
+      <div>
+        <h3 className="text-lg font-bold text-teal-600 mb-1">What Would You Do Differently?</h3>
+        <p className="text-gray-600 text-sm">
+          If you could impose one policy constraint on Dollar General's expansion, which would you choose?
+          Watch how it changes the profit math.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3" role="radiogroup" aria-label="Policy options">
+        {POLICY_OPTIONS.map((opt) => (
+          <button
+            key={opt.id}
+            onClick={() => { setChosenPolicy(opt.id); writeSubmission(sessionId, { policy: opt.id }); }}
+            role="radio"
+            aria-checked={chosenPolicy === opt.id}
+            className={cn(
+              "text-left rounded-lg border p-4 transition-all",
+              chosenPolicy === opt.id
+                ? "border-teal-500 bg-teal-50 ring-1 ring-teal-400"
+                : "border-gray-300 bg-gray-50 hover:border-gray-400 cursor-pointer"
+            )}
+          >
+            <div className="text-sm font-medium text-gray-900">{opt.label}</div>
+            <div className="text-xs text-gray-600 mt-1">
+              Profit impact: <span className={opt.profitPenalty < 0 ? "text-red-600" : "text-gray-600"}>{opt.profitPenalty === 0 ? "None" : `${opt.profitPenalty}%`}</span>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {chosen && (
+        <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-teal-500 space-y-3">
+          <div className="flex items-center gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-amber-600">{baseProfit.toFixed(0)}</div>
+              <div className="text-xs text-gray-500">Base profit</div>
+            </div>
+            <div className="text-gray-500">→</div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-teal-600">
+                {Math.max(0, baseProfit + (baseProfit * chosen.profitPenalty) / 100).toFixed(0)}
+              </div>
+              <div className="text-xs text-gray-500">With policy</div>
+            </div>
+            <div className="text-center">
+              <div className={cn("text-2xl font-bold", chosen.profitPenalty < 0 ? "text-red-600" : "text-gray-600")}>
+                {chosen.profitPenalty === 0 ? "0%" : `${chosen.profitPenalty}%`}
+              </div>
+              <div className="text-xs text-gray-500">Change</div>
+            </div>
+          </div>
+          <p className="text-sm text-gray-800 leading-relaxed">{chosen.communityBenefit}</p>
+          {chosen.id !== "none" && (
+            <p className="text-xs text-gray-500 italic">
+              This is why cities like Tulsa, Fort Worth, and Cleveland have explored similar zoning and requirements.
+              The policy question isn't whether DG provides value — it's whether the current model captures too much value
+              while externalizing too much cost.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Scorecard ──────────────────────────────────────────
+
+function Scorecard({ selected, predictions, sessionId }) {
+  const selectedData = NEIGHBORHOODS.filter((n) => selected.includes(n.id));
+  const totalProfit = selectedData.reduce((sum, n) => sum + n.profitScore, 0);
+  const avgProfit = totalProfit / selectedData.length;
+  const grocersClosed = selectedData.filter((n) => n.communityImpact.grocerCloses).length;
+  const newFoodDeserts = selectedData.filter((n) => !n.isFoodDesert && n.communityImpact.foodDesertStays).length;
+  const avgProduceChange = selectedData.reduce((sum, n) => sum + n.communityImpact.produceSpendingChange, 0) / selectedData.length;
+  const peopleAffected = selectedData.reduce((sum, n) => sum + n.population, 0);
+  const totalJobs = selectedData.reduce((sum, n) => sum + n.dgBrings.jobs, 0);
+
+  // Prediction accuracy
+  let correctCount = 0;
+  let totalPredictions = 0;
+  selectedData.forEach((n) => {
+    const pred = predictions[n.id];
+    if (!pred) return;
+    if (n.hasLocalGrocer) {
+      totalPredictions++;
+      if (pred.grocerCloses === n.communityImpact.grocerCloses) correctCount++;
+    }
+    totalPredictions++;
+    const actualDrop = Math.abs(n.communityImpact.produceSpendingChange);
+    let actualCat = actualDrop > 15 ? "drops-big" : actualDrop > 5 ? "drops-some" : "stable";
+    if (pred.produceDirection === actualCat) correctCount++;
+  });
+
+  const dgPicks = [...NEIGHBORHOODS].sort((a, b) => b.profitScore - a.profitScore).slice(0, 3);
+  const dgAvgProfit = dgPicks.reduce((s, n) => s + n.profitScore, 0) / 3;
+  const dgGrocersClosed = dgPicks.filter((n) => n.communityImpact.grocerCloses).length;
+
+  return (
+    <div className="space-y-6">
+      {/* Your scorecard */}
+      <div className="bg-white rounded-xl border border-gray-300 p-6">
+        <h3 className="text-lg font-bold text-gray-900 mb-4">Your Scorecard</h3>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="text-center">
+            <div className="text-3xl font-bold text-green-600">{avgProfit.toFixed(0)}</div>
+            <div className="text-xs text-gray-600 mt-1">Avg profit score</div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl font-bold text-red-600">{grocersClosed}</div>
+            <div className="text-xs text-gray-600 mt-1">Grocers closed</div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl font-bold text-red-600">{newFoodDeserts}</div>
+            <div className="text-xs text-gray-600 mt-1">New food deserts</div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl font-bold text-amber-600">{formatPct(avgProduceChange)}</div>
+            <div className="text-xs text-gray-600 mt-1">Avg produce spending</div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl font-bold text-teal-600">{totalJobs}</div>
+            <div className="text-xs text-gray-600 mt-1">Jobs created</div>
+          </div>
+        </div>
+        <div className="mt-4 pt-4 border-t border-gray-300 flex justify-between items-center flex-wrap gap-2">
+          <span className="text-gray-600 text-sm">{peopleAffected.toLocaleString()} people affected by your choices</span>
+          {totalPredictions > 0 && (
+            <span className="text-gray-600 text-sm">
+              Your predictions: <strong className={correctCount / totalPredictions >= 0.5 ? "text-emerald-600" : "text-amber-600"}>{correctCount}/{totalPredictions} correct</strong>
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* DG algorithm comparison */}
+      <div className="bg-amber-50 rounded-xl border border-amber-300 p-6">
+        <h3 className="text-lg font-bold text-amber-700 mb-2">What Dollar General's Algorithm Would Pick</h3>
+        <p className="text-amber-600 text-sm mb-4">
+          Optimizing purely for profit: <strong>{dgPicks.map((n) => n.name).join(", ")}</strong>
+        </p>
+        <div className="grid grid-cols-3 gap-4 text-center">
+          <div>
+            <div className="text-2xl font-bold text-amber-700">{dgAvgProfit.toFixed(0)}</div>
+            <div className="text-xs text-amber-600">Avg profit score</div>
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-red-600">{dgGrocersClosed}</div>
+            <div className="text-xs text-amber-600">Grocers closed</div>
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-red-600">
+              {dgPicks.filter((n) => !n.isFoodDesert && n.communityImpact.foodDesertStays).length}
+            </div>
+            <div className="text-xs text-amber-600">New food deserts</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Policy redesign */}
+      <PolicyRedesign selected={selected} sessionId={sessionId} />
+
+      {/* Structural insight */}
+      <div className="bg-white rounded-xl border border-gray-300 p-6">
+        <h3 className="text-lg font-bold text-gray-900 mb-3">The Structural Insight</h3>
+        <p className="text-gray-800 text-sm leading-relaxed mb-3">
+          Notice the pattern: <strong className="text-amber-600">the most profitable locations are always the ones that cause the most community harm.</strong>{" "}
+          This isn't a bug in Dollar General's strategy — it's the core logic. Their model depends on:
+        </p>
+        <ul className="text-gray-800 text-sm space-y-2 ml-4 list-disc">
+          <li><strong className="text-gray-900">Low competition</strong> — areas where grocers are already thin-margin or absent</li>
+          <li><strong className="text-gray-900">Captive customers</strong> — people without cars or alternatives who must shop what's nearby</li>
+          <li><strong className="text-gray-900">High-margin product mix</strong> — shelf-stable processed food, not fresh produce</li>
+        </ul>
+        <p className="text-gray-800 text-sm leading-relaxed mt-3">
+          But the picture is genuinely complex. Dollar General <em>does</em> provide real value: jobs in communities with few employers,
+          the cheapest staples within walking distance, and tax revenue for struggling municipalities. The question isn't whether
+          dollar stores are "good" or "bad" — it's whether the <strong className="text-teal-600">incentive structure</strong> can
+          be redesigned so the business model doesn't require harming the communities it serves.
+        </p>
+        <p className="text-gray-800 text-sm leading-relaxed mt-3">
+          This is what economists call a <strong className="text-teal-600">negative externality</strong>: the health and access
+          costs of the business model are borne by the community, not the company. It connects directly to the food security
+          framework: Dollar General's location strategy undermines <em>availability</em>, <em>access</em>, and <em>stability</em> simultaneously.
+        </p>
+        <div className="mt-4 pt-3 border-t border-gray-300">
+          <p className="text-xs text-gray-500">
+            Data sources: USDA Food Access Research Atlas (2019/2021) · Census ACS 2014-18 · UCLA Anderson Review ·
+            AJPH Vol. 113, Issue 3 (2023) · Investigate Midwest (2024) · Univ. of Florida / Phys.org (2025)
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main App ───────────────────────────────────────────
+
+function DollarGeneralSiteSelector() {
+  const [selected, setSelected] = useState([]);
+  const [phase, setPhase] = useState("intro"); // intro | selecting | predicting | results
+  const [sortKey, setSortKey] = useState("default");
+  const [predictions, setPredictions] = useState({});
+  const sessionIdRef = useRef(generateSessionId());
+
+  const sortedNeighborhoods = useMemo(
+    () => sortNeighborhoods(NEIGHBORHOODS, sortKey),
+    [sortKey]
+  );
+
+  const toggleSelect = useCallback((id) => {
+    setSelected((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      if (prev.length >= 3) return prev;
+      return [...prev, id];
+    });
+  }, []);
+
+  const handleSubmitSelection = () => {
+    if (selected.length === 3) setPhase("predicting");
+  };
+
+  const handleSubmitPredictions = () => {
+    writeSubmission(sessionIdRef.current, { selected, predictions });
+    setPhase("results");
+  };
+
+  const handleReset = () => {
+    setSelected([]);
+    setPredictions({});
+    setSortKey("default");
+    setPhase("selecting");
+  };
+
+  // ── INTRO ──
+  if (phase === "intro") {
+    return (
+      <div className="min-h-screen bg-gray-50 text-gray-900 flex items-center justify-center p-6">
+        <div className="max-w-2xl text-center space-y-6">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-teal-100 text-teal-700 rounded-full text-sm font-medium mb-2">
+            Interactive Exercise · 5-10 min
+          </div>
+          <h1 className="text-4xl font-bold tracking-tight">
+            Dollar General<br />
+            <span className="text-teal-600">Site Selector</span>
+          </h1>
+          <p className="text-gray-800 text-lg leading-relaxed max-w-lg mx-auto">
+            You're on Dollar General's expansion team. Your job: pick <strong className="text-gray-900">3 locations</strong> for
+            new stores from 9 real communities in the Memphis, TN and Mississippi Delta region.
+          </p>
+          <div className="bg-white rounded-xl p-5 text-left space-y-3 border border-gray-300">
+            <p className="text-sm text-gray-800">
+              <strong className="text-amber-600">Your data dashboard</strong> shows real demographics and market conditions
+              for each community: population, income, poverty rate, car ownership, competition, road traffic, and grocery access.
+            </p>
+            <p className="text-sm text-gray-800">
+              <strong className="text-amber-600">Your goal:</strong> maximize shareholder value. Think like a site selection
+              analyst — which factors matter most for Dollar General's low-cost, high-volume, shelf-stable model?
+            </p>
+            <p className="text-sm text-gray-600 italic">
+              After you submit, you'll predict what happens — then we'll reveal the research-based outcomes.
+            </p>
+          </div>
+
+          {/* Content note */}
+          <div className="bg-gray-100/60 rounded-lg p-4 text-left border border-gray-200/50">
+            <p className="text-xs text-gray-500 leading-relaxed">
+              <strong className="text-gray-600">A note on this exercise:</strong> These are real communities with real residents.
+              The data reflects systemic patterns in how retail investment flows to (and away from) low-income areas. The exercise
+              is designed to illuminate incentive structures, not to characterize or judge any community. Demographic estimates are
+              calibrated from USDA and Census sources but simplified for classroom use.
+            </p>
+          </div>
+
+          <button
+            onClick={() => setPhase("selecting")}
+            className="px-8 py-3 bg-teal-600 hover:bg-teal-500 text-gray-900 font-semibold rounded-lg transition-colors text-lg"
+          >
+            Open the Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── SELECTION / PREDICTION / RESULTS ──
+  return (
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      {/* Sticky header */}
+      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-gray-200 px-6 py-3">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <h1 className="font-bold text-lg">
+            DG Site Selector <span className="text-gray-500">|</span>{" "}
+            <span className="text-teal-600">
+              {phase === "selecting" && "Choose 3 Locations"}
+              {phase === "predicting" && "Make Your Predictions"}
+              {phase === "results" && "Results"}
+            </span>
+          </h1>
+          <div className="flex items-center gap-4">
+            {phase === "selecting" && (
+              <>
+                <div className="flex gap-1" aria-label={`${selected.length} of 3 selected`}>
+                  {[0, 1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className={cn("w-3 h-3 rounded-full transition-colors", i < selected.length ? "bg-teal-500" : "bg-gray-200")}
+                      aria-hidden="true"
+                    />
+                  ))}
+                </div>
+                <span className="text-sm text-gray-600">{selected.length}/3 selected</span>
+                <button
+                  onClick={handleSubmitSelection}
+                  disabled={selected.length !== 3}
+                  className={cn(
+                    "px-5 py-2 rounded-lg font-semibold text-sm transition-all",
+                    selected.length === 3 ? "bg-teal-600 hover:bg-teal-500 text-gray-900" : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  )}
+                >
+                  Lock In Picks →
+                </button>
+              </>
+            )}
+            {phase === "predicting" && (
+              <button
+                onClick={() => setPhase("selecting")}
+                className="px-5 py-2 rounded-lg font-semibold text-sm bg-gray-200 hover:bg-gray-300 text-gray-900"
+              >
+                ← Change Picks
+              </button>
+            )}
+            {phase === "results" && (
+              <button
+                onClick={handleReset}
+                className="px-5 py-2 rounded-lg font-semibold text-sm bg-gray-200 hover:bg-gray-300 text-gray-900"
+              >
+                ↻ Try Different Picks
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        {/* SELECTING */}
+        {phase === "selecting" && (
+          <>
+            <p className="text-gray-600 text-sm mb-4">
+              Review each community's demographics and market conditions. Which 3 locations best fit Dollar General's
+              business model? Consider: who is the target customer, what does the competitive landscape look like, and
+              where will a low-cost store have the most impact on shopping behavior?
+            </p>
+            <SortBar sortKey={sortKey} onSort={setSortKey} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sortedNeighborhoods.map((n) => (
+                <NeighborhoodCard
+                  key={n.id}
+                  n={n}
+                  selected={selected.includes(n.id)}
+                  onToggle={toggleSelect}
+                  disabled={selected.length >= 3 && !selected.includes(n.id)}
+                  phase={phase}
+                />
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* PREDICTING */}
+        {phase === "predicting" && (
+          <PredictionStep
+            selected={selected}
+            predictions={predictions}
+            setPredictions={setPredictions}
+            onSubmit={handleSubmitPredictions}
+          />
+        )}
+
+        {/* RESULTS */}
+        {phase === "results" && (
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">What Happened to Your Communities</h2>
+              <p className="text-gray-600 text-sm mb-6">
+                Here's the research-based projection for each location you chose. See how your predictions held up:
+              </p>
+              <div className="space-y-4">
+                {NEIGHBORHOODS.filter((n) => selected.includes(n.id)).map((n) => (
+                  <ResultCard key={n.id} n={n} predictions={predictions} />
+                ))}
+              </div>
+            </div>
+            <Scorecard selected={selected} predictions={predictions} sessionId={sessionIdRef.current} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Mount ──────────────────────────────────────────────
+ReactDOM.render(
+  React.createElement(DollarGeneralSiteSelector),
+  document.getElementById("root")
+);
+  </script>
+</body>
+</html>
