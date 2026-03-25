@@ -201,6 +201,39 @@ function PresenterDashboard() {
   const revealAll = () => setRevealed({ counter: true, neighborhoods: true, predictions: true, policy: true });
   const hideAll = () => setRevealed({ counter: true, neighborhoods: false, predictions: false, policy: false });
 
+  const loadDummyData = () => {
+    if (!db) return;
+    const policies = ["produce", "buffer", "hire-local", "none"];
+    const produceOpts = ["drops-big", "drops-some", "stable"];
+    const ids = NEIGHBORHOODS.map(n => n.id);
+    const updates = {};
+    for (let i = 0; i < CLASS_SIZE; i++) {
+      const shuffled = [...ids].sort(() => Math.random() - 0.5);
+      const sel = shuffled.slice(0, 3);
+      const preds = {};
+      sel.forEach(id => {
+        const n = NEIGHBORHOODS.find(x => x.id === id);
+        preds[id] = {
+          grocerCloses: Math.random() > 0.5,
+          produceDirection: produceOpts[Math.floor(Math.random() * 3)],
+        };
+      });
+      updates['dummy_' + i] = {
+        selected: sel,
+        predictions: preds,
+        policy: policies[Math.floor(Math.random() * policies.length)],
+        timestamp: Date.now(),
+      };
+    }
+    db.ref('submissions').update(updates);
+  };
+
+  const clearData = () => {
+    if (db && confirm('Clear all submissions (including dummy data)? This cannot be undone.')) {
+      db.ref('submissions').remove();
+    }
+  };
+
   const policyColors = {
     produce: "bg-emerald-500",
     buffer: "bg-blue-500",
@@ -225,10 +258,16 @@ function PresenterDashboard() {
               Hide All
             </button>
             <button
-              onClick={() => { if (db && confirm('Clear all student submissions? This cannot be undone.')) db.ref('submissions').remove(); }}
+              onClick={loadDummyData}
+              className="px-4 py-2 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-lg text-sm font-medium transition-colors"
+            >
+              Load Dummy Data
+            </button>
+            <button
+              onClick={clearData}
               className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm font-medium transition-colors"
             >
-              Reset Data
+              Clear Data
             </button>
           </div>
         </div>
