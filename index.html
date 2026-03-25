@@ -73,12 +73,12 @@ const NEIGHBORHOODS = [
     hasLocalGrocer: false,
     existingDollarStores: 2,
     profitScore: 82,
-    dgBrings: { jobs: 10, cheapestStaplesMi: 0.3, annualTaxRevenue: 42000 },
+    dgBrings: { jobs: 8, cheapestStaplesMi: 0.3, storeOpenCost: 250000 },
     communityImpact: {
       grocerCloses: false,
       produceSpendingChange: -8.2,
       foodDesertStays: true,
-      narrative: "South Memphis already lost its Kroger stores in 2018. Adding another dollar store deepens reliance on shelf-stable processed food. With 28% of residents lacking cars, this becomes the default food source — not a choice. However, a new DG does bring 10 jobs and the cheapest staples within walking distance — a real benefit in a community with limited options.",
+      narrative: "South Memphis already lost its Kroger stores in 2018. Adding another dollar store deepens reliance on shelf-stable processed food. With 28% of residents lacking cars, this becomes the default food source — not a choice. However, a new DG does bring 6–8 jobs and the cheapest staples within walking distance — a real benefit in a community with limited options.",
     },
     coordinates: { row: 0, col: 0 },
   },
@@ -98,12 +98,12 @@ const NEIGHBORHOODS = [
     hasLocalGrocer: true,
     existingDollarStores: 1,
     profitScore: 74,
-    dgBrings: { jobs: 10, cheapestStaplesMi: 0.4, annualTaxRevenue: 55000 },
+    dgBrings: { jobs: 8, cheapestStaplesMi: 0.4, storeOpenCost: 250000 },
     communityImpact: {
       grocerCloses: true,
       produceSpendingChange: -13.8,
       foodDesertStays: true,
-      narrative: "The one remaining grocery store is already marginal. Research suggests a new dollar store could capture enough household spending to push it under. Studies of similar markets show produce spending declines of 10–15%. If the grocer closes, Whitehaven would become a new food desert. The trade-off: 10 new jobs and lower prices on staples, but the community risks losing its only source of fresh food.",
+      narrative: "The one remaining grocery store is already marginal. Research suggests a new dollar store could capture enough household spending to push it under. Caoui et al. (2024) found produce spending declines of ~14% for low-income households in single-dollar-store markets. If the grocer closes, Whitehaven would become a new food desert. The trade-off: 6–8 new jobs and lower prices on staples, but the community risks losing its only source of fresh food.",
     },
     coordinates: { row: 0, col: 1 },
   },
@@ -123,7 +123,7 @@ const NEIGHBORHOODS = [
     hasLocalGrocer: true,
     existingDollarStores: 0,
     profitScore: 41,
-    dgBrings: { jobs: 10, cheapestStaplesMi: 0.5, annualTaxRevenue: 48000 },
+    dgBrings: { jobs: 8, cheapestStaplesMi: 0.5, storeOpenCost: 250000 },
     communityImpact: {
       grocerCloses: false,
       produceSpendingChange: -2.1,
@@ -148,12 +148,12 @@ const NEIGHBORHOODS = [
     hasLocalGrocer: true,
     existingDollarStores: 0,
     profitScore: 88,
-    dgBrings: { jobs: 8, cheapestStaplesMi: 0, annualTaxRevenue: 28000 },
+    dgBrings: { jobs: 6, cheapestStaplesMi: 0, storeOpenCost: 250000 },
     communityImpact: {
       grocerCloses: true,
       produceSpendingChange: -24.6,
       foodDesertStays: true,
-      narrative: "The rural IGA is already thin-margin. Dollar General undercuts on packaged goods — the grocer's profit center. Investigate Midwest reporting finds rural grocers are significantly more likely to exit after a dollar store arrives. If the IGA closes, the nearest grocery would be 14 miles away. Research on similar markets suggests produce spending could decline 20–25%. The 8 new DG jobs may not offset grocer job losses plus the potential loss of fresh food access.",
+      narrative: "The rural IGA is already thin-margin. Dollar General undercuts on packaged goods — the grocer's profit center. A USDA study (Marchesi et al., 2024) found rural independent grocers face a 5% closure rate after dollar store entry — nearly three times the urban rate — with sales declining 9.2%. If the IGA closes, the nearest grocery would be 14 miles away. Research on similar markets suggests produce spending could decline 20–25%. The 6 new DG jobs may not offset grocer job losses plus the potential loss of fresh food access.",
     },
     coordinates: { row: 1, col: 0 },
   },
@@ -173,12 +173,12 @@ const NEIGHBORHOODS = [
     hasLocalGrocer: false,
     existingDollarStores: 3,
     profitScore: 71,
-    dgBrings: { jobs: 10, cheapestStaplesMi: 0.2, annualTaxRevenue: 38000 },
+    dgBrings: { jobs: 8, cheapestStaplesMi: 0.2, storeOpenCost: 250000 },
     communityImpact: {
       grocerCloses: false,
       produceSpendingChange: -30.4,
       foodDesertStays: true,
-      narrative: "Orange Mound already has 3 dollar stores and no grocery. Research on dollar store saturation suggests that in areas with 3+ stores, produce spending can decline by 25–30%. Adding a 4th would compound the problem. Nearly a third of residents have no car — they walk to what's nearby, and what's nearby is chips, soda, and canned food. A 4th store does create jobs but adds almost no new consumer value.",
+      narrative: "Orange Mound already has 3 dollar stores and no grocery. Caoui et al. (2024) found that in areas with 3+ dollar stores, low-income household produce spending can decline by up to 30%. Adding a 4th would compound the problem. Nearly a third of residents have no car — they walk to what's nearby, and what's nearby is chips, soda, and canned food. A 4th store does create jobs but adds almost no new consumer value.",
     },
     coordinates: { row: 1, col: 1 },
   },
@@ -198,7 +198,7 @@ const NEIGHBORHOODS = [
     hasLocalGrocer: false,
     existingDollarStores: 1,
     profitScore: 79,
-    dgBrings: { jobs: 8, cheapestStaplesMi: 0.1, annualTaxRevenue: 24000 },
+    dgBrings: { jobs: 6, cheapestStaplesMi: 0.1, storeOpenCost: 250000 },
     communityImpact: {
       grocerCloses: false,
       produceSpendingChange: -11.5,
@@ -223,7 +223,7 @@ const NEIGHBORHOODS = [
     hasLocalGrocer: true,
     existingDollarStores: 0,
     profitScore: 28,
-    dgBrings: { jobs: 10, cheapestStaplesMi: 0.6, annualTaxRevenue: 62000 },
+    dgBrings: { jobs: 8, cheapestStaplesMi: 0.6, storeOpenCost: 250000 },
     communityImpact: {
       grocerCloses: false,
       produceSpendingChange: -0.4,
@@ -248,12 +248,12 @@ const NEIGHBORHOODS = [
     hasLocalGrocer: true,
     existingDollarStores: 1,
     profitScore: 85,
-    dgBrings: { jobs: 8, cheapestStaplesMi: 0.2, annualTaxRevenue: 31000 },
+    dgBrings: { jobs: 6, cheapestStaplesMi: 0.2, storeOpenCost: 250000 },
     communityImpact: {
       grocerCloses: true,
       produceSpendingChange: -19.2,
       foodDesertStays: true,
-      narrative: "Ruleville's small grocery has an aging owner and slim margins. A second dollar store in a town of 2,950 could capture enough of the packaged-goods market to make the grocery unviable. If it closes, the nearest fresh food would be 18 miles away in Indianola. This pattern has repeated across hundreds of rural Southern towns (Healy-Aarons, 2024). The net job impact is roughly zero (8 DG jobs vs. ~10 grocer jobs), but the community risks losing fresh food access entirely.",
+      narrative: "Ruleville's small grocery has an aging owner and slim margins. A second dollar store in a town of 2,950 could capture enough of the packaged-goods market to make the grocery unviable. If it closes, the nearest fresh food would be 18 miles away in Indianola. This pattern has repeated across hundreds of rural Southern towns (Healy-Aarons, 2024). The net job impact is roughly zero (6 DG jobs vs. ~14 avg independent grocer jobs), but the community risks losing fresh food access entirely.",
     },
     coordinates: { row: 2, col: 1 },
   },
@@ -273,12 +273,12 @@ const NEIGHBORHOODS = [
     hasLocalGrocer: true,
     existingDollarStores: 2,
     profitScore: 80,
-    dgBrings: { jobs: 10, cheapestStaplesMi: 0.3, annualTaxRevenue: 46000 },
+    dgBrings: { jobs: 8, cheapestStaplesMi: 0.3, storeOpenCost: 250000 },
     communityImpact: {
       grocerCloses: true,
       produceSpendingChange: -22.7,
       foodDesertStays: true,
-      narrative: "Frayser's Save-A-Lot is the last grocery standing. With 2 dollar stores already pulling shelf-stable sales, a third could tip the balance. Houghtaling et al. (2023) found that low-income urban grocery stores face significant sales declines with each new dollar store — and Frayser's Save-A-Lot is already operating at the margin. A third DG brings 10 new jobs, but the community risks losing its only fresh-food retailer and the jobs that come with it.",
+      narrative: "Frayser's Save-A-Lot is the last grocery standing. With 2 dollar stores already pulling shelf-stable sales, a third could tip the balance. The USDA (Marchesi et al., 2024) found that independent grocery sales decline ~5–9% per dollar store entry in urban areas — and Frayser's Save-A-Lot is already operating at the margin. A third DG brings 6–8 new jobs, but the community risks losing its only fresh-food retailer and the ~14 jobs that come with it.",
     },
     coordinates: { row: 2, col: 2 },
   },
@@ -415,7 +415,7 @@ function NeighborhoodCard({ n, selected, onToggle, disabled, phase }) {
         <div className="grid grid-cols-3 gap-x-2 text-xs">
           <div><span className="text-gray-500">Jobs:</span> <strong className="text-gray-900">{n.dgBrings.jobs}</strong></div>
           <div><span className="text-gray-500">Cheap staples:</span> <strong className="text-gray-900">{n.dgBrings.cheapestStaplesMi} mi</strong></div>
-          <div><span className="text-gray-500">Tax rev:</span> <strong className="text-gray-900">{formatMoney(n.dgBrings.annualTaxRevenue)}/yr</strong></div>
+          <div><span className="text-gray-500">Open cost:</span> <strong className="text-gray-900">~{formatMoney(n.dgBrings.storeOpenCost)}</strong></div>
         </div>
       </div>
 
@@ -657,9 +657,9 @@ function ResultCard({ n, predictions }) {
 // ─── Policy Redesign Phase ──────────────────────────────
 
 const POLICY_OPTIONS = [
-  { id: "produce", label: "Require fresh produce in all stores", profitPenalty: -18, communityBenefit: "Improves nutrition access, but raises operating costs (refrigeration, waste). DG's internal data shows produce generates ~2% margin vs ~35% for packaged snacks." },
-  { id: "buffer", label: "No new store within 2 mi of an existing grocer", profitPenalty: -31, communityBenefit: "Protects local grocers from displacement. But also blocks DG from its most profitable locations — the ones where captive customers have no alternative." },
-  { id: "hire-local", label: "Require 80% local hiring + living wage", profitPenalty: -12, communityBenefit: "Recirculates money in the community. Modest profit impact, but erodes DG's labor cost advantage (avg wage is ~$10/hr)." },
+  { id: "produce", label: "Require fresh produce in all stores", profitPenalty: -18, communityBenefit: "Improves nutrition access, but raises operating costs (refrigeration, waste). Industry data suggests fresh produce carries far lower margins than packaged goods in small-format stores." },
+  { id: "buffer", label: "No new store within 2 mi of an existing grocer", profitPenalty: -31, communityBenefit: "Protects local grocers from displacement. Caoui et al. (2024) found roughly one independent grocer lost per three dollar stores within a 2-mile radius. But this also blocks dollar stores from their most profitable locations." },
+  { id: "hire-local", label: "Require 80% local hiring + living wage", profitPenalty: -12, communityBenefit: "Recirculates money in the community. Modest profit impact, but erodes DG's labor cost advantage (avg hourly wage is ~$12–14, per Glassdoor/PayScale 2025 data)." },
   { id: "none", label: "No constraints (status quo)", profitPenalty: 0, communityBenefit: "Maximum profit. Maximum community harm. This is the current reality in most U.S. jurisdictions." },
 ];
 
@@ -858,10 +858,11 @@ function Scorecard({ selected, predictions, sessionId }) {
         <div className="mt-4 pt-3 border-t border-gray-300">
           <div className="text-xs text-gray-500 space-y-1">
             <p className="font-semibold text-gray-600">References</p>
-            <p>Allcott, H., Diamond, R., Dubé, J.-P., Handbury, J., Rahkovsky, I., &amp; Schnell, M. (2019). Food deserts and the causes of nutritional inequality. <em>The Quarterly Journal of Economics, 134</em>(4), 1793–1844.</p>
-            <p>Healy-Aarons, L. (2024, March 15). Dollar stores are taking over rural America. <em>Investigate Midwest</em>.</p>
-            <p>Houghtaling, B., Holston, D., Nickols-Richardson, S. M., &amp; Pudney, E. F. (2023). Dollar stores and food access in the United States. <em>American Journal of Public Health, 113</em>(3), 331–339.</p>
-            <p>Shannon, J. (2020). Dollar stores, retailer redlining, and the metropolitan geographies of precarious consumption. <em>Annals of the American Association of Geographers, 110</em>(4), 1200–1218.</p>
+            <p>Caoui, E. H., Hollenbeck, B., &amp; Osborne, M. (2024). The impact of dollar store expansion on local market structure and food access. <em>Working paper, UCLA Anderson School of Management</em>.</p>
+            <p>Feng, Y., Page, E. T., &amp; Cash, S. B. (2023). Dollar stores and food access for rural households in the United States, 2008–2020. <em>American Journal of Public Health, 113</em>(3), 290–298.</p>
+            <p>Healy-Aarons, L. (2024, July 2). Study: Dollar stores' entry into rural communities adds to rural grocery challenges. <em>Investigate Midwest</em>.</p>
+            <p>Marchesi, K., Steinbach, S., &amp; Lopez, R. A. (2024). Dollar store entry affects rural grocery stores more than urban. <em>Amber Waves</em>, USDA Economic Research Service.</p>
+            <p>Shannon, J. (2021). Dollar stores, retailer redlining, and the metropolitan geographies of precarious consumption. <em>Annals of the American Association of Geographers, 111</em>(4), 1200–1218.</p>
             <p>U.S. Census Bureau. (2019). <em>American Community Survey 5-year estimates, 2014–2018</em>.</p>
             <p>U.S. Department of Agriculture, Economic Research Service. (2021). <em>Food Access Research Atlas</em>.</p>
             <p className="mt-2 font-semibold text-gray-600">Note on methodology</p>
