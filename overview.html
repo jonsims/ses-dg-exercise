@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dollar General — Company Overview</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+const { useState } = React;
+
+// ═══════════════════════════════════════════════════════════════
+// DOLLAR GENERAL — Company Overview / Fact Sheet
+// All figures from public sources: SEC 10-K filings, Wikipedia,
+// CompaniesMarketCap.com, Glassdoor, NBC News, USDA ERS
+// ═══════════════════════════════════════════════════════════════
+
+// Store count by year (from SEC filings, Wikipedia, Statista)
+const STORE_HISTORY = [
+  { year: 2010, stores: 9372 },
+  { year: 2012, stores: 10506 },
+  { year: 2014, stores: 11789 },
+  { year: 2016, stores: 13320 },
+  { year: 2018, stores: 15370 },
+  { year: 2020, stores: 16979 },
+  { year: 2022, stores: 19147 },
+  { year: 2024, stores: 20662 },
+];
+
+// Revenue by year (from CompaniesMarketCap / SEC filings, in billions)
+const REVENUE_HISTORY = [
+  { year: 2010, revenue: 13.03 },
+  { year: 2012, revenue: 16.02 },
+  { year: 2014, revenue: 18.90 },
+  { year: 2016, revenue: 21.98 },
+  { year: 2018, revenue: 25.62 },
+  { year: 2020, revenue: 33.74 },
+  { year: 2022, revenue: 37.84 },
+  { year: 2024, revenue: 40.61 },
+];
+
+// Net income by year (from SEC filings / CompaniesMarketCap, in billions)
+const INCOME_HISTORY = [
+  { year: 2019, income: 1.59 },
+  { year: 2020, income: 2.65 },
+  { year: 2021, income: 2.40 },
+  { year: 2022, income: 2.42 },
+  { year: 2023, income: 1.66 },
+  { year: 2024, income: 1.51 },
+];
+
+// Stock price approximate annual close (from Yahoo Finance / TradingView)
+const STOCK_HISTORY = [
+  { year: 2015, price: 72 },
+  { year: 2016, price: 74 },
+  { year: 2017, price: 93 },
+  { year: 2018, price: 109 },
+  { year: 2019, price: 156 },
+  { year: 2020, price: 211 },
+  { year: 2021, price: 236 },
+  { year: 2022, price: 247 },
+  { year: 2023, price: 135 },
+  { year: 2024, price: 78 },
+  { year: 2025, price: 125, label: "Mar 2026" },
+];
+
+function cn(...args) { return args.filter(Boolean).join(" "); }
+
+// ─── Simple bar chart component ─────────────────────────────
+
+function BarChart({ data, xKey, yKey, label, format, color = "bg-teal-500", maxOverride }) {
+  const max = maxOverride || Math.max(...data.map(d => d[yKey]));
+  return (
+    <div className="space-y-1.5">
+      {data.map((d, i) => {
+        const pct = (d[yKey] / max) * 100;
+        return (
+          <div key={i} className="flex items-center gap-2">
+            <div className="w-12 text-xs text-gray-500 text-right font-mono">{d.label || d[xKey]}</div>
+            <div className="flex-1 bg-gray-200 rounded h-6 relative overflow-hidden">
+              <div
+                className={cn("h-full rounded transition-all duration-500", color)}
+                style={{ width: `${Math.max(pct, 2)}%` }}
+              />
+              <div className="absolute inset-0 flex items-center px-2 text-xs font-semibold text-gray-800">
+                {format ? format(d[yKey]) : d[yKey]}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+      <div className="text-xs text-gray-400 text-center mt-1">{label}</div>
+    </div>
+  );
+}
+
+// ─── Big stat card ──────────────────────────────────────────
+
+function Stat({ value, label, sub, color = "text-teal-600" }) {
+  return (
+    <div className="text-center">
+      <div className={cn("text-3xl font-bold", color)}>{value}</div>
+      <div className="text-xs text-gray-600 mt-1 font-medium">{label}</div>
+      {sub && <div className="text-xs text-gray-400 mt-0.5">{sub}</div>}
+    </div>
+  );
+}
+
+// ─── Main Overview ──────────────────────────────────────────
+
+function Overview() {
+  return (
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 bg-amber-400 rounded-lg flex items-center justify-center font-bold text-white text-lg">DG</div>
+            <div>
+              <h1 className="text-2xl font-bold">Dollar General Corporation</h1>
+              <p className="text-gray-500 text-sm">NYSE: DG · Founded 1939 · Goodlettsville, TN</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-5xl mx-auto px-6 py-6 space-y-6">
+
+        {/* ─── Key Stats Row ─── */}
+        <div className="bg-white rounded-xl border border-gray-300 p-6">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">At a Glance (FY 2024)</h2>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+            <Stat value="20,662" label="Stores" sub="in 48 states" />
+            <Stat value="$42.7B" label="Revenue" sub="FY ending Jan 2025" />
+            <Stat value="$1.5B" label="Net Income" sub="+34% vs prior year" color="text-emerald-600" />
+            <Stat value="~194K" label="Employees" sub="~9.4 per store avg" />
+            <Stat value="$250K" label="Cost to Open a Store" sub="vs. millions for a grocer" color="text-amber-600" />
+          </div>
+          <div className="mt-4 pt-3 border-t border-gray-200 text-xs text-gray-400">
+            Sources: DG 10-K (Jan 31, 2025); DG Newsroom Fast Facts; NBC News
+          </div>
+        </div>
+
+        {/* ─── The Business Model ─── */}
+        <div className="bg-white rounded-xl border border-gray-300 p-6">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">The Business Model</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div className="text-lg font-bold text-gray-900 mb-1">Small Format, Low Cost</div>
+              <p className="text-sm text-gray-600">~7,400 sq ft of selling space. Steel-sided buildings built to spec. ~$250K to open vs. several million for a grocery store. 6–8 employees per store.</p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div className="text-lg font-bold text-gray-900 mb-1">Underserved Markets</div>
+              <p className="text-sm text-gray-600">Targets towns under 20,000 population and low-income urban neighborhoods. 60% of core customers earn &lt;$35K/year. 80% repeat customer rate.</p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div className="text-lg font-bold text-gray-900 mb-1">High-Margin Product Mix</div>
+              <p className="text-sm text-gray-600">Shelf-stable, packaged goods dominate. Average transaction ~$15–18. Net sales of ~$264/sq ft. 66% of stores are freestanding buildings.</p>
+            </div>
+          </div>
+          <div className="mt-4 bg-amber-50 rounded-lg p-4 border border-amber-200">
+            <p className="text-sm text-gray-800">
+              <strong className="text-amber-700">The strategic insight:</strong> Dollar General's site selection formula explicitly targets communities
+              with limited retail competition. In 2013, DG refined its formula using data including proximity to post offices and churches to identify
+              14,000 potential locations in "small town and rural markets" (Quartr, 2024). Shannon (2021) found that all three major dollar store chains
+              locate closer to census tracts classified as Black, Latino, and high-diversity — even controlling for income and population density.
+            </p>
+          </div>
+          <div className="mt-3 text-xs text-gray-400">
+            Sources: DG 10-K; NBC News; Quartr (2024); Shannon (2021); RetailWire; Numerator
+          </div>
+        </div>
+
+        {/* ─── Growth Charts ─── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Store count */}
+          <div className="bg-white rounded-xl border border-gray-300 p-6">
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Store Count</h2>
+            <p className="text-xs text-gray-400 mb-4">More than doubled in 14 years</p>
+            <BarChart
+              data={STORE_HISTORY}
+              xKey="year"
+              yKey="stores"
+              format={v => v.toLocaleString()}
+              color="bg-teal-500"
+              label="Source: SEC filings, Statista"
+            />
+          </div>
+
+          {/* Revenue */}
+          <div className="bg-white rounded-xl border border-gray-300 p-6">
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Annual Revenue</h2>
+            <p className="text-xs text-gray-400 mb-4">$13B → $41B in 14 years (+212%)</p>
+            <BarChart
+              data={REVENUE_HISTORY}
+              xKey="year"
+              yKey="revenue"
+              format={v => `$${v.toFixed(1)}B`}
+              color="bg-emerald-500"
+              label="Source: CompaniesMarketCap / SEC filings"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Net income */}
+          <div className="bg-white rounded-xl border border-gray-300 p-6">
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Net Income</h2>
+            <p className="text-xs text-gray-400 mb-4">Peaked in 2020 (COVID), declined sharply through 2023–24</p>
+            <BarChart
+              data={INCOME_HISTORY}
+              xKey="year"
+              yKey="income"
+              format={v => `$${v.toFixed(2)}B`}
+              color="bg-amber-500"
+              maxOverride={3}
+              label="Source: SEC filings, Wikipedia"
+            />
+          </div>
+
+          {/* Stock */}
+          <div className="bg-white rounded-xl border border-gray-300 p-6">
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Stock Price (DG)</h2>
+            <p className="text-xs text-gray-400 mb-4">Peaked at ~$262 (2022), down ~52% since</p>
+            <BarChart
+              data={STOCK_HISTORY}
+              xKey="year"
+              yKey="price"
+              format={v => `$${v}`}
+              color="bg-blue-500"
+              maxOverride={270}
+              label="Source: Yahoo Finance (approx. year-end close)"
+            />
+          </div>
+        </div>
+
+        {/* ─── Strategy Stats ─── */}
+        <div className="bg-white rounded-xl border border-gray-300 p-6">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Numbers That Tell the Story</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-start gap-3 bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div className="text-2xl font-bold text-red-600 w-20 shrink-0">~975</div>
+              <div>
+                <div className="text-sm font-medium text-gray-900">New stores planned per year</div>
+                <div className="text-xs text-gray-500">DG opens roughly 3 new stores every single day. At peak they opened 1,000+ per year (2017–2018).</div>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div className="text-2xl font-bold text-red-600 w-20 shrink-0">60%</div>
+              <div>
+                <div className="text-sm font-medium text-gray-900">Of core customers earn &lt;$35K/yr</div>
+                <div className="text-xs text-gray-500">DG's CEO has described the core customer as households making less than $40K. 30% of these customers have maxed out at least one credit card.</div>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div className="text-2xl font-bold text-amber-600 w-20 shrink-0">5%</div>
+              <div>
+                <div className="text-sm font-medium text-gray-900">Rural grocer closure rate per DG entry</div>
+                <div className="text-xs text-gray-500">USDA (Marchesi et al., 2024) found rural independent grocers face a 5% closure probability when a dollar store opens nearby — nearly 3× the urban rate (1.7%).</div>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div className="text-2xl font-bold text-amber-600 w-20 shrink-0">9.2%</div>
+              <div>
+                <div className="text-sm font-medium text-gray-900">Sales decline at rural grocers after DG entry</div>
+                <div className="text-xs text-gray-500">Nearly double the urban impact (4.7%). Effects persist in rural areas; in urban areas they wane after ~5 years (USDA ERS, 2024).</div>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div className="text-2xl font-bold text-red-600 w-20 shrink-0">14%</div>
+              <div>
+                <div className="text-sm font-medium text-gray-900">Produce spending drop (low-income, 1 dollar store)</div>
+                <div className="text-xs text-gray-500">Caoui et al. (2024) found low-income households cut fresh produce spending by ~13.8% when one dollar store enters; up to 30.4% with 3+ stores.</div>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div className="text-2xl font-bold text-teal-600 w-20 shrink-0">1 : 3</div>
+              <div>
+                <div className="text-sm font-medium text-gray-900">Grocers lost per dollar stores within 2 mi</div>
+                <div className="text-xs text-gray-500">Roughly one independent grocer exits for every three dollar stores that open within a 2-mile radius (Caoui et al., 2024).</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── Timeline ─── */}
+        <div className="bg-white rounded-xl border border-gray-300 p-6">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Key Milestones</h2>
+          <div className="space-y-3">
+            {[
+              { year: "1939", text: "J.L. Turner and Cal Turner Sr. open their first store in Scottsville, KY with $5,000 each" },
+              { year: "1968", text: "IPO — annual sales exceed $40M" },
+              { year: "2007", text: "Taken private by KKR for $7.3B in a leveraged buyout" },
+              { year: "2009", text: "Re-IPO on NYSE at $21/share. 8,194 stores." },
+              { year: "2013", text: "Refines site selection formula using proximity to post offices and churches; identifies 14,000 new potential locations" },
+              { year: "2015", text: "Acquires 314 former Walmart Express locations" },
+              { year: "2019", text: "Hits 16,000 stores. Revenue reaches $27.8B" },
+              { year: "2020", text: "COVID drives record profit ($2.65B net income). Stock hits all-time highs." },
+              { year: "2022", text: "Stock peaks at ~$262. Net income $2.42B. 19,147 stores." },
+              { year: "2023–24", text: "Profit declines 37%. Stock falls to ~$78. Shrink and labor issues. OSHA fines for safety violations." },
+              { year: "2025", text: "20,662 stores in 48 states. Revenue $42.7B. Plans 975 new stores." },
+            ].map((m, i) => (
+              <div key={i} className="flex gap-3">
+                <div className="w-20 shrink-0 text-right font-mono text-sm font-bold text-teal-600">{m.year}</div>
+                <div className="w-px bg-gray-300" />
+                <div className="text-sm text-gray-700 pb-1">{m.text}</div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 text-xs text-gray-400">
+            Sources: Wikipedia; SEC filings; Quartr (2024); OSHA enforcement records
+          </div>
+        </div>
+
+        {/* ─── Sources ─── */}
+        <div className="bg-white rounded-xl border border-gray-300 p-6">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Sources</h2>
+          <div className="text-xs text-gray-500 space-y-1">
+            <p>Caoui, E. H., Hollenbeck, B., &amp; Osborne, M. (2024). The impact of dollar store expansion on local market structure and food access. <em>Working paper, UCLA Anderson School of Management</em>.</p>
+            <p>Dollar General Corporation. (2025). <em>Annual report on Form 10-K for fiscal year ended January 31, 2025</em>. SEC filing.</p>
+            <p>Dollar General Newsroom. (n.d.). Fast facts. Retrieved March 2026.</p>
+            <p>Gutierrez, G. (2019, December 9). Dollar General is thriving. But workers say they pay the price. <em>NBC News</em>.</p>
+            <p>Marchesi, K., Steinbach, S., &amp; Lopez, R. A. (2024). Dollar store entry affects rural grocery stores more than urban. <em>Amber Waves</em>, USDA Economic Research Service.</p>
+            <p>Quartr. (2024). Dollar General: The rural retailer playbook.</p>
+            <p>RetailWire. (2024). Dollar General is betting on the continuing decline of the middle class.</p>
+            <p>Shannon, J. (2021). Dollar stores, retailer redlining, and the metropolitan geographies of precarious consumption. <em>Annals of the American Association of Geographers, 111</em>(4), 1200–1218.</p>
+            <p>Stock price data: Yahoo Finance, TradingView (approximate year-end closing prices).</p>
+            <p>Revenue data: CompaniesMarketCap.com / SEC filings.</p>
+            <p>Wage data: Glassdoor, PayScale (2025 estimates).</p>
+          </div>
+        </div>
+
+        <div className="text-center text-xs text-gray-400 py-4">
+          Dollar General Company Overview · Prepared for SES classroom use · All data from public sources
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.render(
+  React.createElement(Overview),
+  document.getElementById("root")
+);
+  </script>
+</body>
+</html>
