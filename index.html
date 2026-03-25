@@ -103,7 +103,7 @@ const NEIGHBORHOODS = [
       grocerCloses: true,
       produceSpendingChange: -13.8,
       foodDesertStays: true,
-      narrative: "The one remaining grocery store was already marginal. A new dollar store captures enough household spending to push it under. Fresh produce spending drops 13.8% — matching UCLA's finding for single-dollar-store markets. Whitehaven becomes a new food desert. The trade-off: 10 new jobs and lower prices on staples, but the community loses its only source of fresh food.",
+      narrative: "The one remaining grocery store is already marginal. Research suggests a new dollar store could capture enough household spending to push it under. Studies of similar markets show produce spending declines of 10–15%. If the grocer closes, Whitehaven would become a new food desert. The trade-off: 10 new jobs and lower prices on staples, but the community risks losing its only source of fresh food.",
     },
     coordinates: { row: 0, col: 1 },
   },
@@ -153,7 +153,7 @@ const NEIGHBORHOODS = [
       grocerCloses: true,
       produceSpendingChange: -24.6,
       foodDesertStays: true,
-      narrative: "This is the Dollar General playbook at its most devastating. The rural IGA was already thin-margin. Dollar General undercuts on packaged goods — the grocer's profit center. Within 18 months the IGA closes. The nearest grocery is now 14 miles away. Produce spending collapses. Per Investigate Midwest: rural grocers are 3× more likely to exit after a dollar store arrives. The 8 new DG jobs don't offset the 12 lost at the IGA plus the complete loss of fresh food access.",
+      narrative: "The rural IGA is already thin-margin. Dollar General undercuts on packaged goods — the grocer's profit center. Investigate Midwest reporting finds rural grocers are significantly more likely to exit after a dollar store arrives. If the IGA closes, the nearest grocery would be 14 miles away. Research on similar markets suggests produce spending could decline 20–25%. The 8 new DG jobs may not offset grocer job losses plus the potential loss of fresh food access.",
     },
     coordinates: { row: 1, col: 0 },
   },
@@ -178,7 +178,7 @@ const NEIGHBORHOODS = [
       grocerCloses: false,
       produceSpendingChange: -30.4,
       foodDesertStays: true,
-      narrative: "Orange Mound already has 3 dollar stores and no grocery. This is what UCLA calls the saturation effect: with 3+ dollar stores, produce spending drops up to 30.4%. Adding a 4th compounds the problem. Nearly a third of residents have no car — they walk to what's nearby, and what's nearby is chips, soda, and canned food. A 4th store does create jobs but adds almost no new consumer value.",
+      narrative: "Orange Mound already has 3 dollar stores and no grocery. Research on dollar store saturation suggests that in areas with 3+ stores, produce spending can decline by 25–30%. Adding a 4th would compound the problem. Nearly a third of residents have no car — they walk to what's nearby, and what's nearby is chips, soda, and canned food. A 4th store does create jobs but adds almost no new consumer value.",
     },
     coordinates: { row: 1, col: 1 },
   },
@@ -253,7 +253,7 @@ const NEIGHBORHOODS = [
       grocerCloses: true,
       produceSpendingChange: -19.2,
       foodDesertStays: true,
-      narrative: "Ruleville's small grocery has an aging owner and slim margins. A second dollar store in a town of 2,950 captures enough of the packaged-goods market to make the grocery unviable. When it closes, the nearest fresh food is 18 miles away in Indianola. This pattern has repeated across hundreds of rural Southern towns. The net job impact is roughly zero (8 DG jobs replace 10 grocer jobs), but the food quality collapses.",
+      narrative: "Ruleville's small grocery has an aging owner and slim margins. A second dollar store in a town of 2,950 could capture enough of the packaged-goods market to make the grocery unviable. If it closes, the nearest fresh food would be 18 miles away in Indianola. This pattern has repeated across hundreds of rural Southern towns (Healy-Aarons, 2024). The net job impact is roughly zero (8 DG jobs vs. ~10 grocer jobs), but the community risks losing fresh food access entirely.",
     },
     coordinates: { row: 2, col: 1 },
   },
@@ -278,7 +278,7 @@ const NEIGHBORHOODS = [
       grocerCloses: true,
       produceSpendingChange: -22.7,
       foodDesertStays: true,
-      narrative: "Frayser's Save-A-Lot is the last grocery standing. With 2 dollar stores already pulling shelf-stable sales, a third tips the balance. The grocer closes. Per the AJPH study, rural and low-income urban grocery stores see ~9% sales declines per dollar store — and Frayser's Save-A-Lot was already operating at the margin. Again: 10 new jobs, but the community loses its only fresh-food retailer and the 15 jobs that came with it.",
+      narrative: "Frayser's Save-A-Lot is the last grocery standing. With 2 dollar stores already pulling shelf-stable sales, a third could tip the balance. Houghtaling et al. (2023) found that low-income urban grocery stores face significant sales declines with each new dollar store — and Frayser's Save-A-Lot is already operating at the margin. A third DG brings 10 new jobs, but the community risks losing its only fresh-food retailer and the jobs that come with it.",
     },
     coordinates: { row: 2, col: 2 },
   },
@@ -622,7 +622,7 @@ function ResultCard({ n, predictions }) {
       <div className="flex justify-between items-start flex-wrap gap-2">
         <h3 className="font-bold text-gray-900 text-lg">{n.name}, {n.state}</h3>
         <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-medium">
-          DG Profit Score: {n.profitScore}/100
+          Illustrative Profit Score: {n.profitScore}/100
         </span>
       </div>
 
@@ -633,17 +633,17 @@ function ResultCard({ n, predictions }) {
           <div className={cn("text-2xl font-bold", impact.grocerCloses ? "text-red-600" : "text-gray-600")}>
             {impact.grocerCloses ? "YES" : "NO"}
           </div>
-          <div className="text-xs text-gray-600 mt-1">Local grocer closes?</div>
+          <div className="text-xs text-gray-600 mt-1">Grocer likely closes?</div>
         </div>
         <div className="rounded-lg p-3 text-center bg-red-50 border border-red-300">
           <div className="text-2xl font-bold text-red-600">{formatPct(impact.produceSpendingChange)}</div>
-          <div className="text-xs text-gray-600 mt-1">Produce spending</div>
+          <div className="text-xs text-gray-600 mt-1">Produce spending (est.)</div>
         </div>
         <div className={cn("rounded-lg p-3 text-center", impact.foodDesertStays ? "bg-red-50 border border-red-300" : "bg-gray-50 border border-gray-300")}>
           <div className={cn("text-2xl font-bold", impact.foodDesertStays ? "text-red-600" : "text-emerald-600")}>
-            {impact.foodDesertStays ? "YES" : "NO"}
+            {impact.foodDesertStays ? "LIKELY" : "NO"}
           </div>
-          <div className="text-xs text-gray-600 mt-1">Food desert?</div>
+          <div className="text-xs text-gray-600 mt-1">Food desert risk?</div>
         </div>
       </div>
 
@@ -776,7 +776,7 @@ function Scorecard({ selected, predictions, sessionId }) {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="text-center">
             <div className="text-3xl font-bold text-green-600">{avgProfit.toFixed(0)}</div>
-            <div className="text-xs text-gray-600 mt-1">Avg profit score</div>
+            <div className="text-xs text-gray-600 mt-1">Avg profit score (illustrative)</div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold text-red-600">{grocersClosed}</div>
@@ -814,7 +814,7 @@ function Scorecard({ selected, predictions, sessionId }) {
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <div className="text-2xl font-bold text-amber-700">{dgAvgProfit.toFixed(0)}</div>
-            <div className="text-xs text-amber-600">Avg profit score</div>
+            <div className="text-xs text-amber-600">Avg profit score (illustrative)</div>
           </div>
           <div>
             <div className="text-2xl font-bold text-red-600">{dgGrocersClosed}</div>
@@ -864,7 +864,8 @@ function Scorecard({ selected, predictions, sessionId }) {
             <p>Shannon, J. (2020). Dollar stores, retailer redlining, and the metropolitan geographies of precarious consumption. <em>Annals of the American Association of Geographers, 110</em>(4), 1200–1218.</p>
             <p>U.S. Census Bureau. (2019). <em>American Community Survey 5-year estimates, 2014–2018</em>.</p>
             <p>U.S. Department of Agriculture, Economic Research Service. (2021). <em>Food Access Research Atlas</em>.</p>
-            <p>University of Florida. (2025). Dollar store proximity linked to reduced fresh food spending. <em>Phys.org</em>.</p>
+            <p className="mt-2 font-semibold text-gray-600">Note on methodology</p>
+            <p>Demographic data is sourced directly from Census ACS and USDA. Community impact projections (produce spending changes, grocer displacement likelihood, profit scores) are illustrative scenarios modeled from patterns described in the above research — not empirical measurements for these specific locations. Produce spending estimates reflect ranges reported across studies, applied to approximate local conditions.</p>
           </div>
         </div>
       </div>
@@ -944,9 +945,12 @@ function DollarGeneralSiteSelector() {
           <div className="bg-gray-100/60 rounded-lg p-4 text-left border border-gray-200/50">
             <p className="text-xs text-gray-500 leading-relaxed">
               <strong className="text-gray-600">A note on this exercise:</strong> These are real communities with real residents.
-              The data reflects systemic patterns in how retail investment flows to (and away from) low-income areas. The exercise
-              is designed to illuminate incentive structures, not to characterize or judge any community. Demographic estimates are
-              calibrated from USDA and Census sources but simplified for classroom use.
+              Demographic data (population, income, poverty rate, vehicle access) comes from the U.S. Census American Community Survey
+              (2014–2018), and food desert designations come from the USDA Food Access Research Atlas (2021).
+              Community impact projections — including grocer displacement likelihood, produce spending changes,
+              and profit scores — are <strong className="text-gray-600">illustrative scenarios modeled from published research patterns</strong>,
+              not measured outcomes for these specific locations. They are designed to reflect documented structural dynamics,
+              not to predict what will happen in any particular community.
             </p>
           </div>
 
@@ -1059,9 +1063,9 @@ function DollarGeneralSiteSelector() {
         {phase === "results" && (
           <div className="space-y-8">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">What Happened to Your Communities</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Projected Outcomes for Your Communities</h2>
               <p className="text-gray-600 text-sm mb-6">
-                Here's the research-based projection for each location you chose. See how your predictions held up:
+                Based on published research patterns, here are the likely outcomes for each location you chose. See how your predictions compare:
               </p>
               <div className="space-y-4">
                 {NEIGHBORHOODS.filter((n) => selected.includes(n.id)).map((n) => (
