@@ -495,7 +495,7 @@ function PredictionStep({ selected, predictions, setPredictions, onSubmit }) {
                         onClick={() => updatePrediction(n.id, "grocerCloses", false)}
                         className={cn(
                           "flex-1 py-2 rounded-lg text-sm font-medium transition-colors",
-                          pred.grocerCloses === false ? "bg-gray-200 text-gray-800 ring-1 ring-gray-400" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                          pred.grocerCloses === false ? "bg-red-200 text-red-800 ring-1 ring-red-400" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
                         )}
                       >
                         No grocer enters
@@ -531,7 +531,7 @@ function PredictionStep({ selected, predictions, setPredictions, onSubmit }) {
                     onClick={() => updatePrediction(n.id, "produceDirection", "drops-some")}
                     className={cn(
                       "flex-1 py-2 rounded-lg text-xs font-medium transition-colors",
-                      pred.produceDirection === "drops-some" ? "bg-amber-800 text-amber-800 ring-1 ring-amber-400" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                      pred.produceDirection === "drops-some" ? "bg-amber-200 text-amber-800 ring-1 ring-amber-400" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
                     )}
                   >
                     Drops a little (5-15%)
@@ -856,10 +856,16 @@ function Scorecard({ selected, predictions, sessionId }) {
           framework: Dollar General's location strategy undermines <em>availability</em>, <em>access</em>, and <em>stability</em> simultaneously.
         </p>
         <div className="mt-4 pt-3 border-t border-gray-300">
-          <p className="text-xs text-gray-500">
-            Data sources: USDA Food Access Research Atlas (2019/2021) · Census ACS 2014-18 · UCLA Anderson Review ·
-            AJPH Vol. 113, Issue 3 (2023) · Investigate Midwest (2024) · Univ. of Florida / Phys.org (2025)
-          </p>
+          <div className="text-xs text-gray-500 space-y-1">
+            <p className="font-semibold text-gray-600">References</p>
+            <p>Allcott, H., Diamond, R., Dubé, J.-P., Handbury, J., Rahkovsky, I., &amp; Schnell, M. (2019). Food deserts and the causes of nutritional inequality. <em>The Quarterly Journal of Economics, 134</em>(4), 1793–1844.</p>
+            <p>Healy-Aarons, L. (2024, March 15). Dollar stores are taking over rural America. <em>Investigate Midwest</em>.</p>
+            <p>Houghtaling, B., Holston, D., Nickols-Richardson, S. M., &amp; Pudney, E. F. (2023). Dollar stores and food access in the United States. <em>American Journal of Public Health, 113</em>(3), 331–339.</p>
+            <p>Shannon, J. (2020). Dollar stores, retailer redlining, and the metropolitan geographies of precarious consumption. <em>Annals of the American Association of Geographers, 110</em>(4), 1200–1218.</p>
+            <p>U.S. Census Bureau. (2019). <em>American Community Survey 5-year estimates, 2014–2018</em>.</p>
+            <p>U.S. Department of Agriculture, Economic Research Service. (2021). <em>Food Access Research Atlas</em>.</p>
+            <p>University of Florida. (2025). Dollar store proximity linked to reduced fresh food spending. <em>Phys.org</em>.</p>
+          </div>
         </div>
       </div>
     </div>
