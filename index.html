@@ -575,39 +575,59 @@ function PredictionStep({ selected, predictions, setPredictions, onSubmit }) {
 
 // ─── Prediction Accuracy Badge ──────────────────────────
 
-function PredictionBadge({ n, predictions }) {
+function PredictionComparison({ n, predictions }) {
   const pred = predictions[n.id];
   if (!pred) return null;
   const actual = n.communityImpact;
-  const results = [];
 
-  // Grocer prediction accuracy
+  const produceLabels = { "drops-big": "Drops a lot (>15%)", "drops-some": "Drops a little (5–15%)", "stable": "Stays about the same" };
+  const actualDrop = Math.abs(actual.produceSpendingChange);
+  const actualProduceCat = actualDrop > 15 ? "drops-big" : actualDrop > 5 ? "drops-some" : "stable";
+
+  const rows = [];
+
+  // Grocer row
   if (n.hasLocalGrocer) {
-    const correct = pred.grocerCloses === actual.grocerCloses;
-    results.push({ label: correct ? "Grocer prediction correct" : "Grocer prediction wrong", correct });
+    const yourAnswer = pred.grocerCloses ? "It closes" : "It survives";
+    const projected = actual.grocerCloses ? "Likely closes" : "Likely survives";
+    const match = pred.grocerCloses === actual.grocerCloses;
+    rows.push({ question: "Local grocer", you: yourAnswer, research: projected, match });
+  } else {
+    const yourAnswer = pred.grocerCloses ? "A grocer opens" : "No grocer enters";
+    const projected = actual.grocerCloses ? "A grocer may open" : "No grocer likely enters";
+    const match = pred.grocerCloses === actual.grocerCloses;
+    rows.push({ question: "New grocer?", you: yourAnswer, research: projected, match });
   }
 
-  // Produce prediction accuracy
-  const actualDrop = Math.abs(actual.produceSpendingChange);
-  let actualCategory;
-  if (actualDrop > 15) actualCategory = "drops-big";
-  else if (actualDrop > 5) actualCategory = "drops-some";
-  else actualCategory = "stable";
-  const produceCorrect = pred.produceDirection === actualCategory;
-  results.push({ label: produceCorrect ? "Produce prediction correct" : "Produce prediction wrong", correct: produceCorrect });
+  // Produce row
+  const produceMatch = pred.produceDirection === actualProduceCat;
+  rows.push({
+    question: "Produce spending",
+    you: produceLabels[pred.produceDirection] || "—",
+    research: `${produceLabels[actualProduceCat]} (${formatPct(actual.produceSpendingChange)})`,
+    match: produceMatch,
+  });
 
   return (
-    <div className="flex flex-wrap gap-2 mt-2">
-      {results.map((r, i) => (
-        <span
-          key={i}
-          className={cn(
-            "px-2 py-0.5 rounded-full text-xs font-medium",
-            r.correct ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600"
-          )}
-        >
-          {r.correct ? "✓" : "✗"} {r.label}
-        </span>
+    <div className="rounded-lg border border-gray-300 overflow-hidden">
+      <div className="grid grid-cols-4 bg-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+        <div className="px-3 py-2">Question</div>
+        <div className="px-3 py-2">Your prediction</div>
+        <div className="px-3 py-2">Research projects</div>
+        <div className="px-3 py-2 text-center">Match?</div>
+      </div>
+      {rows.map((r, i) => (
+        <div key={i} className={cn("grid grid-cols-4 text-sm border-t border-gray-200", r.match ? "bg-emerald-50" : "bg-red-50")}>
+          <div className="px-3 py-3 font-medium text-gray-700">{r.question}</div>
+          <div className="px-3 py-3 text-gray-800">{r.you}</div>
+          <div className="px-3 py-3 text-gray-800 font-medium">{r.research}</div>
+          <div className="px-3 py-3 text-center text-lg">
+            {r.match
+              ? <span className="text-emerald-600 font-bold">✓</span>
+              : <span className="text-red-500 font-bold">✗</span>
+            }
+          </div>
+        </div>
       ))}
     </div>
   );
@@ -621,31 +641,19 @@ function ResultCard({ n, predictions }) {
     <div className="rounded-xl border border-gray-300 bg-white p-5 space-y-4">
       <div className="flex justify-between items-start flex-wrap gap-2">
         <h3 className="font-bold text-gray-900 text-lg">{n.name}, {n.state}</h3>
-        <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-medium">
-          Illustrative Profit Score: {n.profitScore}/100
-        </span>
-      </div>
-
-      <PredictionBadge n={n} predictions={predictions} />
-
-      <div className="grid grid-cols-3 gap-3">
-        <div className={cn("rounded-lg p-3 text-center", impact.grocerCloses ? "bg-red-50 border border-red-300" : "bg-gray-50 border border-gray-300")}>
-          <div className={cn("text-2xl font-bold", impact.grocerCloses ? "text-red-600" : "text-gray-600")}>
-            {impact.grocerCloses ? "YES" : "NO"}
-          </div>
-          <div className="text-xs text-gray-600 mt-1">Grocer likely closes?</div>
-        </div>
-        <div className="rounded-lg p-3 text-center bg-red-50 border border-red-300">
-          <div className="text-2xl font-bold text-red-600">{formatPct(impact.produceSpendingChange)}</div>
-          <div className="text-xs text-gray-600 mt-1">Produce spending (est.)</div>
-        </div>
-        <div className={cn("rounded-lg p-3 text-center", impact.foodDesertStays ? "bg-red-50 border border-red-300" : "bg-gray-50 border border-gray-300")}>
-          <div className={cn("text-2xl font-bold", impact.foodDesertStays ? "text-red-600" : "text-emerald-600")}>
-            {impact.foodDesertStays ? "LIKELY" : "NO"}
-          </div>
-          <div className="text-xs text-gray-600 mt-1">Food desert risk?</div>
+        <div className="flex gap-2">
+          {impact.foodDesertStays && (
+            <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-medium">
+              Food desert risk
+            </span>
+          )}
+          <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs font-medium">
+            Profit score: {n.profitScore}/100
+          </span>
         </div>
       </div>
+
+      <PredictionComparison n={n} predictions={predictions} />
 
       <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-800 leading-relaxed border-l-4 border-amber-500">
         {impact.narrative}
